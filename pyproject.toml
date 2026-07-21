@@ -55,6 +55,10 @@ dev = [
     "jupyter>=1.0",
 ]
 
+[tool.pytest.ini_options]
+testpaths = ["ingestion/tests", "evals"]
+addopts = "-q"
+
 [tool.ruff]
 line-length = 100
 target-version = "py312"

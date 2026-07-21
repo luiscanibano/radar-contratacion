@@ -12,6 +12,7 @@ data/raw/
 data/staging/
 *.zip
 *.atom
+!ingestion/tests/fixtures/*.atom
 
 # dbt
 transform/target/

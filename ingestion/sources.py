@@ -35,7 +35,10 @@ PLACSP_DATASETS: dict[str, PlacspDataset] = {
         sindicacion_id=643,
         file_prefix="licitacionesPerfilesContratanteCompleto3",
         first_year=2012,
-        description="Licitaciones publicadas en perfiles del contratante (excluye contratos menores).",
+        description=(
+            "Licitaciones publicadas en perfiles del contratante "
+            "(excluye contratos menores)."
+        ),
     ),
     "contratos_menores": PlacspDataset(
         key="contratos_menores",
@@ -70,4 +73,4 @@ PLACSP_DATASETS: dict[str, PlacspDataset] = {
 
 # TED (UE) — paquetes bulk sin autenticación (XML eForms).
 TED_MONTHLY = "https://ted.europa.eu/packages/monthly/{year}-{month}"  # p.ej. 2025-6
-TED_DAILY = "https://ted.europa.eu/packages/daily/{yyyynnnnn}"        # p.ej. 202500123
+TED_DAILY = "https://ted.europa.eu/packages/daily/{yyyynnnnn}"  # p.ej. 202500123
