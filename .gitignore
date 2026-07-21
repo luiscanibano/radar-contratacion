@@ -37,4 +37,4 @@ $DAGSTER_HOME/
 Thumbs.db
 
 # Claude Code (configuración local personal)
-.claude/settings.local.json
+.claude/
