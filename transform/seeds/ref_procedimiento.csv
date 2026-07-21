@@ -1,0 +1,11 @@
+codigo,procedimiento_desc
+1,Abierto
+2,Restringido
+3,Negociado con publicidad
+4,Negociado sin publicidad
+7,Diálogo competitivo (revisar)
+8,Contrato menor (revisar)
+9,Otros (revisar)
+13,Abierto simplificado (revisar)
+100,Otros (revisar)
+999,Otros (revisar)

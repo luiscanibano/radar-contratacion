@@ -58,14 +58,32 @@ cp .env.example .env          # rellena las claves
 docker compose up -d postgres # levanta Postgres + pgvector
 
 make ingest                   # descarga y carga un año de PLACSP en DuckDB
-make transform                # ejecuta los modelos dbt
+make transform                # dbt build: seeds + modelos + tests de calidad
+make orchestrate              # Dagster en localhost:3000 (ingesta -> dbt con linaje)
 make api                      # arranca FastAPI en localhost:8000
 ```
 
+## Modelo dbt
+
+Capas `staging → intermediate → marts` sobre el DuckDB `raw`:
+
+- **staging** (views): deduplica los expedientes a su última versión publicada y
+  tipa importes/fechas — `stg_placsp__licitaciones`, `…__lotes`, `…__adjudicaciones`.
+- **intermediate** (ephemeral): `int_adjudicaciones_enriquecidas` cruza cada
+  adjudicación con su expediente y su lote y calcula la *baja* sobre presupuesto.
+- **marts** (tablas): `fct_licitaciones`, `fct_adjudicaciones`, `dim_organo`,
+  `dim_adjudicatario`. Las etiquetas de códigos (estado, tipo, procedimiento)
+  viven en **seeds** (`ref_*`).
+- **calidad**: tests genéricos (`not_null`, `unique`, `accepted_values`,
+  `relationships`), rangos con `dbt_utils` y tests singulares de negocio.
+
+Orquestado con Dagster + `dagster-dbt`: la ingesta (dlt) y cada modelo/seed/test
+de dbt son assets con linaje; los tests aparecen como *asset checks*.
+
 ## Roadmap (8 semanas)
 
-1. Ingesta PLACSP + modelo relacional
-2. Marts dbt + tests de calidad + orquestación Dagster
+1. ✅ Ingesta PLACSP + modelo relacional
+2. ✅ Marts dbt + tests de calidad + orquestación Dagster
 3. Modelos estadísticos (anomalías, importe con incertidumbre)
 4. Capa vectorial + búsqueda híbrida
 5. Agente conversacional (text-to-SQL + RAG)

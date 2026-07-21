@@ -1,0 +1,40 @@
+version: 2
+
+seeds:
+  - name: ref_estado_licitacion
+    description: >
+      Codelist del estado de tramitación del expediente (ContractFolderStatusCode
+      de CODICE). Mapeo verificado contra los valores presentes en los datos.
+    config:
+      column_types:
+        codigo: varchar
+        estado_desc: varchar
+    columns:
+      - name: codigo
+        tests: [not_null, unique]
+
+  - name: ref_tipo_contrato
+    description: >
+      Codelist del tipo de contrato (TypeCode de CODICE). Mapeo best-effort: las
+      filas marcadas "(revisar)" deben validarse contra la codelist oficial de
+      PLACSP antes de usarse en informes.
+    config:
+      column_types:
+        codigo: varchar
+        tipo_contrato_desc: varchar
+    columns:
+      - name: codigo
+        tests: [not_null, unique]
+
+  - name: ref_procedimiento
+    description: >
+      Codelist del procedimiento de adjudicación (ProcedureCode de CODICE).
+      Mapeo best-effort: filas "(revisar)" pendientes de validar contra la
+      codelist oficial de PLACSP.
+    config:
+      column_types:
+        codigo: varchar
+        procedimiento_desc: varchar
+    columns:
+      - name: codigo
+        tests: [not_null, unique]

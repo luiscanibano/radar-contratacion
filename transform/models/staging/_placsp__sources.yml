@@ -2,16 +2,37 @@ version: 2
 
 sources:
   - name: raw
-    description: "Datos crudos cargados por dlt desde PLACSP."
+    description: "Datos crudos cargados por dlt desde PLACSP (perfiles del contratante)."
     schema: raw
+    # Nota: `updated` marca cuándo PLACSP republicó el expediente; se usa para
+    # deduplicar en staging y para medir frescura de la fuente.
+    loaded_at_field: updated
+    freshness:
+      warn_after: {count: 7, period: day}
     tables:
       - name: licitaciones
-        description: "Entradas ATOM de licitaciones (perfiles del contratante)."
+        description: >
+          Cabecera del expediente. OJO: NO es única por `entry_id` — hay varias
+          versiones por expediente (una por cambio de estado). La unicidad se
+          garantiza en stg_placsp__licitaciones tras deduplicar.
         columns:
           - name: entry_id
-            description: "Identificador único de la entrada ATOM."
+            description: "Identificador ATOM del expediente (URL de sindicación)."
             tests:
               - not_null
-              - unique
-          - name: expediente
-            description: "Identificador del expediente de contratación."
+
+      - name: licitaciones__lotes
+        description: "Lotes de cada expediente (tabla hija normalizada por dlt)."
+        columns:
+          - name: _dlt_parent_id
+            description: "FK al `_dlt_id` de la fila padre en `licitaciones`."
+            tests:
+              - not_null
+
+      - name: licitaciones__adjudicaciones
+        description: "Resultados de adjudicación (tabla hija normalizada por dlt)."
+        columns:
+          - name: _dlt_parent_id
+            description: "FK al `_dlt_id` de la fila padre en `licitaciones`."
+            tests:
+              - not_null

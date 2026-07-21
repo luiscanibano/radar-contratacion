@@ -1,0 +1,48 @@
+version: 2
+
+models:
+  - name: stg_placsp__licitaciones
+    description: >
+      Licitaciones limpias y tipadas, una fila por expediente (última versión
+      publicada). Base del modelo relacional.
+    columns:
+      - name: entry_id
+        description: "Clave de negocio del expediente. Única tras deduplicar."
+        tests: [not_null, unique]
+      - name: expediente
+        tests: [not_null]
+      - name: organo_nif
+        description: "NIF del órgano de contratación. Clave de dim_organo."
+        tests: [not_null]
+      - name: estado
+        tests:
+          - accepted_values:
+              values: [PRE, PUB, EV, ADJ, RES, ANUL]
+      - name: presupuesto_sin_impuestos
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+              config:
+                severity: warn
+
+  - name: stg_placsp__lotes
+    description: "Lotes por expediente, enlazables por _lic_dlt_id."
+    columns:
+      - name: _lic_dlt_id
+        tests: [not_null]
+
+  - name: stg_placsp__adjudicaciones
+    description: "Resultados de adjudicación, enlazables por _lic_dlt_id."
+    columns:
+      - name: adjudicacion_id
+        tests: [not_null, unique]
+      - name: _lic_dlt_id
+        tests: [not_null]
+      - name: importe_sin_impuestos
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+              config:
+                severity: warn

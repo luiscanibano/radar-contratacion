@@ -18,6 +18,7 @@ data/staging/
 transform/target/
 transform/dbt_packages/
 transform/logs/
+transform/.user.yml
 
 # Dagster
 orchestration/tmp_dagster_home/

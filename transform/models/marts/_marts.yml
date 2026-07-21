@@ -2,13 +2,85 @@ version: 2
 
 models:
   - name: fct_licitaciones
-    description: "Tabla de hechos de licitaciones, base para análisis y agente."
+    description: >
+      Tabla de hechos de licitaciones (una fila por expediente), enriquecida con
+      etiquetas legibles, división CPV y señales de riesgo. Base para el agente.
     columns:
       - name: entry_id
+        description: "Clave del expediente."
+        tests: [not_null, unique]
+      - name: organo_nif
+        description: "NIF del órgano; FK a dim_organo."
         tests:
           - not_null
-          - unique
-      - name: presupuesto_sin_impuestos
-        description: "Presupuesto base de licitación sin impuestos."
+          - relationships:
+              to: ref('dim_organo')
+              field: organo_nif
+      - name: estado
+        tests:
+          - accepted_values:
+              values: [PRE, PUB, EV, ADJ, RES, ANUL]
       - name: cpv_division
-        description: "División CPV (2 primeros dígitos), para segmentar por sector."
+        description: "División CPV (2 primeros dígitos)."
+      - name: presupuesto_sin_impuestos
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+              config:
+                severity: warn
+
+  - name: fct_adjudicaciones
+    description: >
+      Tabla de hechos de adjudicaciones (una fila por resultado de licitación),
+      con baja sobre presupuesto y señales de competencia.
+    columns:
+      - name: adjudicacion_id
+        tests: [not_null, unique]
+      - name: entry_id
+        description: "FK al expediente en fct_licitaciones."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('fct_licitaciones')
+              field: entry_id
+      - name: organo_nif
+        tests: [not_null]
+      - name: baja_pct
+        description: "Rebaja sobre el presupuesto de referencia (1 - importe/presupuesto)."
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: -1
+              max_value: 1
+              inclusive: true
+              config:
+                severity: warn
+      - name: importe_sin_impuestos
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+              config:
+                severity: warn
+
+  - name: dim_organo
+    description: "Órganos de contratación con volumen licitado y adjudicado."
+    columns:
+      - name: organo_nif
+        tests: [not_null, unique]
+      - name: n_expedientes
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 1
+              inclusive: true
+
+  - name: dim_adjudicatario
+    description: "Empresas adjudicatarias identificadas por NIF."
+    columns:
+      - name: adjudicatario_nif
+        tests: [not_null, unique]
+      - name: n_adjudicaciones
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 1
+              inclusive: true

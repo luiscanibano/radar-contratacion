@@ -1,0 +1,7 @@
+codigo,estado_desc
+PRE,Anuncio previo
+PUB,Publicada / en plazo
+EV,Pendiente de adjudicación
+ADJ,Adjudicada
+RES,Resuelta
+ANUL,Anulada

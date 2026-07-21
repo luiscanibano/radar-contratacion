@@ -4,16 +4,17 @@ help:  ## Muestra esta ayuda
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
 		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
 
-install:  ## Instala dependencias con uv
+install:  ## Instala dependencias con uv y los paquetes dbt
 	uv sync --all-extras
+	cd transform && uv run dbt deps
 
 ingest:  ## Descarga y carga los años configurados de PLACSP en DuckDB
 	uv run python -m ingestion.placsp_pipeline
 
-transform:  ## Ejecuta los modelos dbt
-	cd transform && uv run dbt run
+transform:  ## Ejecuta el flujo dbt completo: seeds + modelos + tests
+	cd transform && uv run dbt build
 
-test-dbt:  ## Ejecuta los tests de calidad de dbt
+test-dbt:  ## Ejecuta solo los tests de calidad de dbt
 	cd transform && uv run dbt test
 
 orchestrate:  ## Levanta Dagster en localhost:3000
