@@ -12,6 +12,12 @@ class Settings(BaseSettings):
     claude_model: str = "claude-sonnet-5"
     duckdb_path: str = "data/radar.duckdb"
 
+    # Embeddings locales (multilingües, corren en CPU). BGE-m3 = 1024 dims.
+    # Cambiar de modelo implica ajustar `embedding_dim` y la dimensión del
+    # esquema en search/schema.sql.
+    embedding_model: str = "BAAI/bge-m3"
+    embedding_dim: int = 1024
+
     postgres_host: str = "localhost"
     postgres_port: int = 5432
     postgres_db: str = "radar"

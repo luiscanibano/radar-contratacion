@@ -17,6 +17,7 @@ from dagster import (
     AssetSpec,
     Definitions,
     ScheduleDefinition,
+    asset,
     define_asset_job,
     multi_asset,
 )
@@ -24,6 +25,7 @@ from dagster_dbt import (
     DbtCliResource,
     DbtProject,
     dbt_assets,
+    get_asset_key_for_model,
 )
 
 from ingestion.placsp_pipeline import run as run_placsp
@@ -63,6 +65,33 @@ def dbt_radar(context: AssetExecutionContext, dbt: DbtCliResource):
     yield from dbt.cli(["build"], context=context).stream()
 
 
+# --- Capa vectorial ---------------------------------------------------------
+# La ingesta de embeddings cuelga del mart `fct_licitaciones`: cuando dbt lo
+# refresca, se re-embeben (incrementalmente) los expedientes nuevos o cambiados
+# y se hace upsert en Postgres+pgvector.
+@asset(
+    deps=[get_asset_key_for_model([dbt_radar], "fct_licitaciones")],
+    group_name="vectorial",
+    kinds={"postgres"},
+)
+def licitacion_embeddings(context: AssetExecutionContext):
+    """Ingesta incremental de embeddings (marts DuckDB -> Postgres+pgvector)."""
+    from search.ingest import ingest  # import diferido: no cargar torch al definir
+
+    resultado = ingest()
+    context.log.info(
+        f"Embeddings: {resultado.embebidos} embebidos, "
+        f"{resultado.sin_cambios} sin cambios (total {resultado.total})."
+    )
+    context.add_output_metadata(
+        {
+            "embebidos": resultado.embebidos,
+            "sin_cambios": resultado.sin_cambios,
+            "total": resultado.total,
+        }
+    )
+
+
 # --- Job + schedule ---------------------------------------------------------
 daily_refresh_job = define_asset_job("daily_refresh", selection="*")
 
@@ -72,7 +101,7 @@ daily_schedule = ScheduleDefinition(
 )
 
 defs = Definitions(
-    assets=[raw_placsp, dbt_radar],
+    assets=[raw_placsp, dbt_radar, licitacion_embeddings],
     jobs=[daily_refresh_job],
     schedules=[daily_schedule],
     resources={"dbt": DbtCliResource(project_dir=dbt_project, dbt_executable=DBT_EXECUTABLE)},

@@ -17,6 +17,9 @@ transform:  ## Ejecuta el flujo dbt completo: seeds + modelos + tests
 test-dbt:  ## Ejecuta solo los tests de calidad de dbt
 	cd transform && uv run dbt test
 
+embeddings:  ## Ingesta incremental de embeddings a Postgres+pgvector
+	uv run python -m search.ingest
+
 orchestrate:  ## Levanta Dagster en localhost:3000
 	uv run dagster dev -m orchestration.definitions
 
