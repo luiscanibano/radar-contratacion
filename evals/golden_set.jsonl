@@ -1,0 +1,4 @@
+{"pregunta": "¿Cuántas licitaciones hay registradas en 2025?", "criterio": "Devuelve un conteo numérico basado en fct_licitaciones del año 2025."}
+{"pregunta": "¿Qué órgano de contratación tiene mayor presupuesto total?", "criterio": "Agrupa por organo_contratacion, suma presupuesto y devuelve el máximo."}
+{"pregunta": "Dame las 5 divisiones CPV con más licitaciones", "criterio": "Agrupa por cpv_division, cuenta y ordena descendente, top 5."}
+{"pregunta": "¿Cuántas licitaciones están cerca del umbral de contrato menor?", "criterio": "Cuenta filas con cerca_umbral_menor = true."}

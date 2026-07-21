@@ -1,0 +1,9 @@
+# HTTPS automático vía Let's Encrypt. Sustituye el dominio por el tuyo.
+# Caddy obtiene y renueva el certificado solo.
+{$DOMAIN} {
+	reverse_proxy api:8000
+	encode gzip
+	log {
+		output stdout
+	}
+}

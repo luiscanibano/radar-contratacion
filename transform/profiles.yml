@@ -1,0 +1,11 @@
+# Perfil dbt-duckdb. Apunta al mismo fichero DuckDB que llena la ingesta.
+radar:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "../data/radar.duckdb"
+      threads: 4
+      extensions:
+        - httpfs
+        - parquet

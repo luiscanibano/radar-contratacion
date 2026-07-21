@@ -1,0 +1,11 @@
+# Normaliza saltos de línea a LF en el repo (evita problemas CRLF en el VPS Linux).
+* text=auto eol=lf
+
+# Binarios: no tocar saltos de línea.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.zip binary
+*.duckdb binary
+*.parquet binary

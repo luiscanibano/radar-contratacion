@@ -1,0 +1,14 @@
+version: 2
+
+models:
+  - name: fct_licitaciones
+    description: "Tabla de hechos de licitaciones, base para análisis y agente."
+    columns:
+      - name: entry_id
+        tests:
+          - not_null
+          - unique
+      - name: presupuesto_sin_impuestos
+        description: "Presupuesto base de licitación sin impuestos."
+      - name: cpv_division
+        description: "División CPV (2 primeros dígitos), para segmentar por sector."

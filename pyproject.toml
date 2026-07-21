@@ -1,0 +1,70 @@
+[project]
+name = "radar-contratacion"
+version = "0.1.0"
+description = "Inteligencia sobre contratación pública española: ingesta, análisis y agente conversacional."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+    "python-dotenv>=1.0",
+    "httpx>=0.27",
+    "polars>=1.0",
+    "duckdb>=1.0",
+]
+
+[project.optional-dependencies]
+ingestion = [
+    "dlt[duckdb]>=1.0",
+    "lxml>=5.2",          # parseo de ATOM/CODICE
+]
+transform = [
+    "dbt-core>=1.8",
+    "dbt-duckdb>=1.8",
+]
+orchestration = [
+    "dagster>=1.7",
+    "dagster-webserver>=1.7",
+]
+analytics = [
+    "scikit-learn>=1.5",
+    "statsmodels>=0.14",
+    "numpy>=1.26",
+    "pandas>=2.2",
+]
+api = [
+    "fastapi>=0.111",
+    "uvicorn[standard]>=0.30",
+    "anthropic>=0.34",
+    "psycopg[binary]>=3.2",
+    "pgvector>=0.3",
+]
+mcp = [
+    "mcp>=1.0",
+]
+evals = [
+    "ragas>=0.1",
+    "langfuse>=2.40",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.5",
+    "pytest>=8.2",
+    "ipykernel>=6.29",
+    "jupyter>=1.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["ingestion", "orchestration", "api", "mcp_server", "analytics"]

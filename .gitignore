@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.uv/
+*.egg-info/
+
+# Datos y artefactos
+data/*.duckdb
+data/*.duckdb.wal
+data/raw/
+data/staging/
+*.zip
+*.atom
+
+# dbt
+transform/target/
+transform/dbt_packages/
+transform/logs/
+
+# Dagster
+orchestration/tmp_dagster_home/
+$DAGSTER_HOME/
+
+# Entorno
+.env
+.env.*
+!.env.example
+
+# Notebooks
+.ipynb_checkpoints/
+
+# IDE / SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Claude Code (configuración local personal)
+.claude/settings.local.json
