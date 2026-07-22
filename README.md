@@ -85,8 +85,8 @@ de dbt son assets con linaje; los tests aparecen como *asset checks*.
 1. ✅ Ingesta PLACSP + modelo relacional
 2. ✅ Marts dbt + tests de calidad + orquestación Dagster
 3. ✅ Modelos estadísticos (anomalías, importe con incertidumbre)
-4. Capa vectorial + búsqueda híbrida
-5. Agente conversacional (text-to-SQL + RAG)
+4. ✅ Capa vectorial + búsqueda híbrida
+5. 🔄 Agente conversacional (text-to-SQL + RAG) — wiring y validación hechos, quedan edge cases
 6. Evals + observabilidad
 7. Producto (auth, Stripe, alertas) + despliegue en VPS
 8. Servidor MCP + pulido + lanzamiento

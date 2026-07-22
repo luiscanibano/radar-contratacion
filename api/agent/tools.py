@@ -1,9 +1,14 @@
-"""Herramientas del agente. La principal es text-to-SQL de solo lectura sobre
-DuckDB, con guardrails para impedir cualquier operación que no sea SELECT.
+"""Herramientas del agente.
+
+`consultar_datos` es text-to-SQL de solo lectura sobre DuckDB, con guardrails
+para impedir cualquier operación que no sea SELECT. `buscar_licitaciones` es
+búsqueda híbrida (léxica + vectorial, ver `search/hibrida.py`) para preguntas
+en lenguaje natural que no encajan bien en SQL exacto (sinónimos, paráfrasis).
 """
 
 from __future__ import annotations
 
+import dataclasses
 import re
 from typing import Any
 
@@ -19,7 +24,7 @@ _FORBIDDEN = re.compile(
 
 # Esquema que exponemos al agente en el system prompt (text-to-SQL fiable).
 SCHEMA_DESCRIPTION = """
-Tabla: main_marts.fct_licitaciones
+Tabla: main.fct_licitaciones
 Columnas:
   entry_id (texto), expediente (texto), objeto (texto),
   organo_contratacion (texto), estado (texto), tipo_contrato (texto),
@@ -68,5 +73,54 @@ SQL_TOOL = {
             }
         },
         "required": ["query"],
+    },
+}
+
+
+def buscar_licitaciones(consulta: str, k: int = 10) -> dict[str, Any]:
+    """Búsqueda híbrida (léxica + vectorial, fusión RRF) en lenguaje natural.
+
+    Import perezoso: `search.hibrida` arrastra psycopg/pgvector y (para
+    embeber la consulta) sentence-transformers/torch, que son el extra
+    opcional `search` y no una dependencia dura del agente.
+    """
+    try:
+        from search.hibrida import buscar
+    except ImportError as exc:
+        return {"error": f"Búsqueda híbrida no disponible (falta el extra 'search'): {exc}"}
+
+    try:
+        resultados = buscar(consulta, k=k)
+    except Exception as exc:  # noqa: BLE001 — devolvemos el error al agente para que lo maneje
+        return {"error": str(exc)}
+
+    return {
+        "resultados": [dataclasses.asdict(r) for r in resultados],
+        "row_count": len(resultados),
+    }
+
+
+# Definición de la tool en formato de la Claude API (tool use).
+BUSQUEDA_HIBRIDA_TOOL = {
+    "name": "buscar_licitaciones",
+    "description": (
+        "Busca licitaciones por significado (no solo coincidencia exacta de texto), "
+        "combinando búsqueda léxica y semántica. Úsala para preguntas en lenguaje "
+        "natural sobre el objeto de una licitación (sinónimos, paráfrasis, conceptos) "
+        "que no encajan bien como filtro SQL exacto."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "consulta": {
+                "type": "string",
+                "description": "Consulta en lenguaje natural sobre el objeto de la licitación.",
+            },
+            "k": {
+                "type": "integer",
+                "description": "Número máximo de resultados a devolver (por defecto 10).",
+            },
+        },
+        "required": ["consulta"],
     },
 }

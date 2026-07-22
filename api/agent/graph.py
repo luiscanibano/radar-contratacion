@@ -11,21 +11,30 @@ import json
 
 from anthropic import Anthropic
 
-from api.agent.tools import SCHEMA_DESCRIPTION, SQL_TOOL, run_readonly_sql
+from api.agent.tools import (
+    BUSQUEDA_HIBRIDA_TOOL,
+    SCHEMA_DESCRIPTION,
+    SQL_TOOL,
+    buscar_licitaciones,
+    run_readonly_sql,
+)
 from api.settings import settings
 
 SYSTEM_PROMPT = f"""
 Eres el analista de datos de "Radar de Contratación Pública". Respondes preguntas
-sobre licitaciones del sector público español consultando los datos con la
-herramienta `consultar_datos` (SQL de solo lectura sobre DuckDB).
+sobre licitaciones del sector público español consultando los datos con dos
+herramientas: `consultar_datos` (SQL de solo lectura sobre DuckDB, para preguntas
+cuantitativas o con filtros exactos) y `buscar_licitaciones` (búsqueda híbrida
+léxica + semántica, para preguntas en lenguaje natural sobre el objeto de una
+licitación que no encajan bien como filtro SQL exacto).
 
 Reglas:
-- Siempre basa tus respuestas en datos reales obtenidos con la herramienta.
+- Siempre basa tus respuestas en datos reales obtenidos con las herramientas.
 - Cita las cifras y explica de dónde salen. Nunca inventes números.
 - Al hablar de posibles irregularidades, usa lenguaje de "señal a revisar",
   nunca acusaciones.
 
-Esquema disponible:
+Esquema disponible (para `consultar_datos`):
 {SCHEMA_DESCRIPTION}
 """.strip()
 
@@ -48,7 +57,7 @@ def answer(question: str, max_turns: int = 5) -> str:
                     "cache_control": {"type": "ephemeral"},
                 }
             ],
-            tools=[SQL_TOOL],
+            tools=[SQL_TOOL, BUSQUEDA_HIBRIDA_TOOL],
             messages=messages,
         )
 
@@ -58,15 +67,21 @@ def answer(question: str, max_turns: int = 5) -> str:
         messages.append({"role": "assistant", "content": response.content})
         tool_results = []
         for block in response.content:
-            if block.type == "tool_use" and block.name == "consultar_datos":
+            if block.type != "tool_use":
+                continue
+            if block.name == "consultar_datos":
                 result = run_readonly_sql(block.input["query"])
-                tool_results.append(
-                    {
-                        "type": "tool_result",
-                        "tool_use_id": block.id,
-                        "content": json.dumps(result, default=str, ensure_ascii=False),
-                    }
-                )
+            elif block.name == "buscar_licitaciones":
+                result = buscar_licitaciones(block.input["consulta"], k=block.input.get("k", 10))
+            else:
+                continue
+            tool_results.append(
+                {
+                    "type": "tool_result",
+                    "tool_use_id": block.id,
+                    "content": json.dumps(result, default=str, ensure_ascii=False),
+                }
+            )
         messages.append({"role": "user", "content": tool_results})
 
     return "No he podido resolver la consulta en el número de pasos permitido."
