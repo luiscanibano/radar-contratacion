@@ -13,6 +13,7 @@ asset Dagster aguas abajo de los marts dbt).
 from __future__ import annotations
 
 import hashlib
+import os
 from dataclasses import dataclass
 
 import pandas as pd
@@ -23,6 +24,10 @@ from search.embeddings import embed
 
 # Solo expedientes con algo de texto; el título y el objeto pueden venir nulos
 # por separado, pero al menos uno debe existir para que el embedding tenga sentido.
+# `{limit_clause}` permite acotar filas en dev/CI (ver SEARCH_INGEST_LIMIT):
+# embeber en CPU es lento (algunos segundos por documento), así que validar el
+# pipeline completo con un subconjunto pequeño es mucho más rápido que esperar
+# el lote completo.
 _SQL_MARTS = """
 select
     entry_id,
@@ -35,16 +40,45 @@ select
     presupuesto_sin_impuestos           as presupuesto
 from main.fct_licitaciones
 where coalesce(title, objeto) is not null
+{limit_clause}
 """
 
-_UPSERT = """
+# Subimos los datos a una tabla de staging con COPY (un único stream, sin ida
+# y vuelta por fila) y de ahí hacemos el upsert en una sola sentencia. Antes
+# usábamos executemany() con miles de INSERT individuales: con ~16k filas de
+# vectores de 1024 dims eso puede llenar a la vez el buffer de salida del
+# cliente y el de respuesta del servidor y bloquear ambos lados sin avisar
+# (deadlock de TCP), sin consumir CPU ni dar ningún error. COPY no tiene ese
+# problema porque el protocolo es unidireccional.
+_STAGING = """
+create temporary table staging_embeddings (
+    entry_id       text,
+    expediente     text,
+    objeto         text,
+    organo         text,
+    cpv_division   text,
+    anio           integer,
+    presupuesto    numeric,
+    contenido      text,
+    contenido_hash text,
+    embedding      vector(1024)
+) on commit drop
+"""
+
+_COPY_STAGING = """
+copy staging_embeddings
+    (entry_id, expediente, objeto, organo, cpv_division, anio, presupuesto,
+     contenido, contenido_hash, embedding)
+from stdin
+"""
+
+_UPSERT_DESDE_STAGING = """
 insert into licitacion_embeddings
     (entry_id, expediente, objeto, organo, cpv_division, anio, presupuesto,
      contenido, contenido_hash, embedding, actualizado_en)
-values
-    (%(entry_id)s, %(expediente)s, %(objeto)s, %(organo)s, %(cpv_division)s,
-     %(anio)s, %(presupuesto)s, %(contenido)s, %(contenido_hash)s,
-     %(embedding)s::vector, now())
+select entry_id, expediente, objeto, organo, cpv_division, anio, presupuesto,
+       contenido, contenido_hash, embedding, now()
+from staging_embeddings
 on conflict (entry_id) do update set
     expediente     = excluded.expediente,
     objeto         = excluded.objeto,
@@ -82,11 +116,17 @@ def _hashes_existentes(con) -> dict[str, str]:
         return dict(cur.fetchall())
 
 
-def ingest(batch_size: int = 64) -> ResultadoIngesta:
-    """Ejecuta la ingesta incremental completa y devuelve el conteo."""
+def ingest(batch_size: int = 64, limit: int | None = None) -> ResultadoIngesta:
+    """Ejecuta la ingesta incremental completa y devuelve el conteo.
+
+    `limit` acota el número de expedientes candidatos (ver SEARCH_INGEST_LIMIT
+    en el bloque `__main__`), útil para validar el pipeline sin esperar el
+    lote completo en una máquina lenta en CPU.
+    """
     db.init_schema()
 
-    df: pd.DataFrame = duck_query(_SQL_MARTS)
+    limit_clause = f"limit {int(limit)}" if limit else ""
+    df: pd.DataFrame = duck_query(_SQL_MARTS.format(limit_clause=limit_clause))
     df["contenido"] = [_contenido(t, o) for t, o in zip(df["title"], df["objeto"], strict=True)]
     df = df[df["contenido"].str.len() > 0].copy()
     df["contenido_hash"] = df["contenido"].map(_hash)
@@ -102,23 +142,25 @@ def ingest(batch_size: int = 64) -> ResultadoIngesta:
             vectores = embed(pendientes["contenido"].tolist(), batch_size=batch_size)
             pendientes["embedding"] = [db.vector_literal(v) for v in vectores]
 
-            filas = [
-                {
-                    "entry_id": r["entry_id"],
-                    "expediente": r["expediente"],
-                    "objeto": r["objeto"] or None,
-                    "organo": r["organo"],
-                    "cpv_division": r["cpv_division"],
-                    "anio": int(r["anio"]) if pd.notna(r["anio"]) else None,
-                    "presupuesto": float(r["presupuesto"]) if pd.notna(r["presupuesto"]) else None,
-                    "contenido": r["contenido"],
-                    "contenido_hash": r["contenido_hash"],
-                    "embedding": r["embedding"],
-                }
-                for _, r in pendientes.iterrows()
-            ]
             with con.cursor() as cur:
-                cur.executemany(_UPSERT, filas)
+                cur.execute(_STAGING)
+                with cur.copy(_COPY_STAGING) as copy:
+                    for _, r in pendientes.iterrows():
+                        copy.write_row(
+                            (
+                                r["entry_id"],
+                                r["expediente"],
+                                r["objeto"] or None,
+                                r["organo"],
+                                r["cpv_division"],
+                                int(r["anio"]) if pd.notna(r["anio"]) else None,
+                                float(r["presupuesto"]) if pd.notna(r["presupuesto"]) else None,
+                                r["contenido"],
+                                r["contenido_hash"],
+                                r["embedding"],
+                            )
+                        )
+                cur.execute(_UPSERT_DESDE_STAGING)
             con.commit()
 
     return ResultadoIngesta(
@@ -129,7 +171,8 @@ def ingest(batch_size: int = 64) -> ResultadoIngesta:
 
 
 if __name__ == "__main__":
-    resultado = ingest()
+    env_limit = os.getenv("SEARCH_INGEST_LIMIT")
+    resultado = ingest(limit=int(env_limit) if env_limit else None)
     print(
         f"Ingesta de embeddings: {resultado.embebidos} embebidos, "
         f"{resultado.sin_cambios} sin cambios (total {resultado.total})."

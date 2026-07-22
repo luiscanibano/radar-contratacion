@@ -10,6 +10,7 @@ data/*.duckdb
 data/*.duckdb.wal
 data/raw/
 data/staging/
+data/*.log
 *.zip
 *.atom
 !ingestion/tests/fixtures/*.atom
