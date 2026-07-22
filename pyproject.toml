@@ -62,7 +62,7 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["ingestion/tests", "analytics/tests", "search/tests", "evals"]
+testpaths = ["ingestion/tests", "analytics/tests", "search/tests", "api/tests", "evals"]
 addopts = "-q"
 
 [tool.ruff]

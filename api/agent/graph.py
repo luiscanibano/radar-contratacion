@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 
-from anthropic import Anthropic
+from anthropic import Anthropic, APIError
 
 from api.agent.tools import (
     BUSQUEDA_HIBRIDA_TOOL,
@@ -33,6 +33,14 @@ Reglas:
 - Cita las cifras y explica de dónde salen. Nunca inventes números.
 - Al hablar de posibles irregularidades, usa lenguaje de "señal a revisar",
   nunca acusaciones.
+- Si la pregunta es ambigua o le falta un dato imprescindible para elegir bien
+  la herramienta o los filtros (p. ej. no está claro el año, el órgano, o si
+  se busca un expediente concreto o una categoría amplia), no lo adivines:
+  responde con una pregunta breve pidiendo esa aclaración en vez de llamar a
+  una herramienta.
+- Si una herramienta devuelve un error, o si las herramientas disponibles no
+  bastan para responder con datos reales, dilo explícitamente en vez de
+  inventar una respuesta.
 
 Esquema disponible (para `consultar_datos`):
 {SCHEMA_DESCRIPTION}
@@ -44,22 +52,28 @@ def answer(question: str, max_turns: int = 5) -> str:
     messages = [{"role": "user", "content": question}]
 
     for _ in range(max_turns):
-        response = client.messages.create(
-            model=settings.claude_model,
-            max_tokens=1500,
-            # cache_control cachea el prompt de sistema (esquema + reglas): es
-            # idéntico en cada petición, así que a partir de la 2ª se sirve a
-            # ~0,1x del coste. Verifica con response.usage.cache_read_input_tokens.
-            system=[
-                {
-                    "type": "text",
-                    "text": SYSTEM_PROMPT,
-                    "cache_control": {"type": "ephemeral"},
-                }
-            ],
-            tools=[SQL_TOOL, BUSQUEDA_HIBRIDA_TOOL],
-            messages=messages,
-        )
+        try:
+            response = client.messages.create(
+                model=settings.claude_model,
+                max_tokens=1500,
+                # cache_control cachea el prompt de sistema (esquema + reglas): es
+                # idéntico en cada petición, así que a partir de la 2ª se sirve a
+                # ~0,1x del coste. Verifica con response.usage.cache_read_input_tokens.
+                system=[
+                    {
+                        "type": "text",
+                        "text": SYSTEM_PROMPT,
+                        "cache_control": {"type": "ephemeral"},
+                    }
+                ],
+                tools=[SQL_TOOL, BUSQUEDA_HIBRIDA_TOOL],
+                messages=messages,
+            )
+        except APIError as exc:
+            return (
+                f"No he podido contactar con el modelo ({exc.message}). "
+                "Inténtalo de nuevo en unos segundos."
+            )
 
         if response.stop_reason != "tool_use":
             return "".join(b.text for b in response.content if b.type == "text")
@@ -69,12 +83,17 @@ def answer(question: str, max_turns: int = 5) -> str:
         for block in response.content:
             if block.type != "tool_use":
                 continue
-            if block.name == "consultar_datos":
-                result = run_readonly_sql(block.input["query"])
-            elif block.name == "buscar_licitaciones":
-                result = buscar_licitaciones(block.input["consulta"], k=block.input.get("k", 10))
-            else:
-                continue
+            try:
+                if block.name == "consultar_datos":
+                    result = run_readonly_sql(block.input["query"])
+                elif block.name == "buscar_licitaciones":
+                    result = buscar_licitaciones(
+                        block.input["consulta"], k=block.input.get("k", 10)
+                    )
+                else:
+                    result = {"error": f"Herramienta desconocida: {block.name}"}
+            except Exception as exc:  # noqa: BLE001 — un tool_use mal formado no debe tumbar el agente
+                result = {"error": f"No se pudo ejecutar la herramienta: {exc}"}
             tool_results.append(
                 {
                     "type": "tool_result",
