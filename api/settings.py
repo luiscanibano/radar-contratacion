@@ -51,6 +51,11 @@ class Settings(BaseSettings):
     billing_success_url: str = "http://localhost:8000/billing/exito"
     billing_cancel_url: str = "http://localhost:8000/billing/cancelado"
 
+    # Alertas por email. Sin clave, el job de alertas falla al enviar (no al
+    # buscar) y lo registra sin tumbar las demás alertas (ver api/alertas.py).
+    resend_api_key: str = ""
+    alert_from_email: str = "alertas@radarcontratacion.com"
+
     @property
     def postgres_dsn(self) -> str:
         return (

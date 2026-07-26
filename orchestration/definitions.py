@@ -92,6 +92,30 @@ def licitacion_embeddings(context: AssetExecutionContext):
     )
 
 
+# --- Alertas ------------------------------------------------------------------
+# Cuelga de la capa vectorial: solo tiene sentido reejecutar las búsquedas
+# guardadas una vez el índice híbrido está al día con los datos del día.
+@asset(
+    deps=[licitacion_embeddings],
+    group_name="alertas",
+    kinds={"resend"},
+)
+def alertas_email(context: AssetExecutionContext):
+    """Reejecuta las alertas guardadas y avisa por email de los resultados nuevos."""
+    from api.alertas import ejecutar_alertas
+
+    resumen = ejecutar_alertas()
+    if resumen.errores:
+        context.log.warning(f"Alertas con errores: {resumen.errores}")
+    context.add_output_metadata(
+        {
+            "alertas_procesadas": resumen.alertas_procesadas,
+            "emails_enviados": resumen.emails_enviados,
+            "errores": len(resumen.errores),
+        }
+    )
+
+
 # --- Job + schedule ---------------------------------------------------------
 daily_refresh_job = define_asset_job("daily_refresh", selection="*")
 
@@ -101,7 +125,7 @@ daily_schedule = ScheduleDefinition(
 )
 
 defs = Definitions(
-    assets=[raw_placsp, dbt_radar, licitacion_embeddings],
+    assets=[raw_placsp, dbt_radar, licitacion_embeddings, alertas_email],
     jobs=[daily_refresh_job],
     schedules=[daily_schedule],
     resources={"dbt": DbtCliResource(project_dir=dbt_project, dbt_executable=DBT_EXECUTABLE)},

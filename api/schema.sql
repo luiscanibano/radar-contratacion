@@ -33,3 +33,24 @@ create table if not exists uso_mensual (
     preguntas   integer not null default 0,
     primary key (usuario_id, mes)
 );
+
+-- Búsqueda guardada por un usuario. Se reejecuta periódicamente (ver
+-- orchestration/definitions.py) contra la búsqueda híbrida y avisa por email
+-- de los resultados que no se habían visto antes.
+create table if not exists alertas (
+    id             bigint generated always as identity primary key,
+    usuario_id     bigint not null references usuarios(id),
+    consulta_texto text not null,
+    creado_en      timestamptz not null default now()
+);
+
+-- Resultados ya notificados de cada alerta. Se guarda el conjunto completo de
+-- entry_id vistos (no solo "el último"): el ranking de la búsqueda híbrida no
+-- es estable entre ejecuciones (RRF puede reordenar), así que no hay una
+-- noción de "más reciente" fiable en la que apoyarse.
+create table if not exists alertas_vistos (
+    alerta_id  bigint not null references alertas(id) on delete cascade,
+    entry_id   text not null,
+    visto_en   timestamptz not null default now(),
+    primary key (alerta_id, entry_id)
+);

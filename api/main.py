@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 from api.agent.graph import responder
 from api.agent.tools import run_readonly_sql
+from api.alertas import borrar_alerta, crear_alerta, listar_alertas
 from api.auth import (
     Usuario,
     autenticar_usuario,
@@ -41,6 +42,10 @@ class Token(BaseModel):
 
 class PlanSolicitado(BaseModel):
     plan: str
+
+
+class AlertaSolicitada(BaseModel):
+    consulta_texto: str
 
 
 @app.get("/health")
@@ -121,3 +126,25 @@ async def webhook(request: Request, stripe_signature: str = Header(default="")) 
         procesar_webhook(payload, stripe_signature)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@app.post("/alertas", status_code=status.HTTP_201_CREATED)
+def crear_alerta_endpoint(
+    solicitud: AlertaSolicitada,
+    usuario: Usuario = Depends(usuario_actual),  # noqa: B008
+) -> dict[str, int]:
+    return {"id": crear_alerta(usuario.id, solicitud.consulta_texto)}
+
+
+@app.get("/alertas")
+def listar_alertas_endpoint(usuario: Usuario = Depends(usuario_actual)) -> list[dict]:  # noqa: B008
+    return listar_alertas(usuario.id)
+
+
+@app.delete("/alertas/{alerta_id}", status_code=status.HTTP_204_NO_CONTENT)
+def borrar_alerta_endpoint(
+    alerta_id: int,
+    usuario: Usuario = Depends(usuario_actual),  # noqa: B008
+) -> None:
+    if not borrar_alerta(usuario.id, alerta_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Alerta no encontrada")
