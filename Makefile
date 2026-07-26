@@ -1,4 +1,4 @@
-.PHONY: help install ingest transform test-dbt orchestrate api mcp evals evals-rapido evals-retrieval lint
+.PHONY: help install ingest transform test-dbt init-db orchestrate api mcp evals evals-rapido evals-retrieval lint
 
 help:  ## Muestra esta ayuda
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
@@ -19,6 +19,9 @@ test-dbt:  ## Ejecuta solo los tests de calidad de dbt
 
 embeddings:  ## Ingesta incremental de embeddings a Postgres+pgvector
 	uv run python -m search.ingest
+
+init-db:  ## Crea/actualiza las tablas de la app (usuarios, suscripciones, alertas...) en Postgres
+	uv run python -c "from api.db import init_schema; init_schema()"
 
 orchestrate:  ## Levanta Dagster en localhost:3000
 	uv run dagster dev -m orchestration.definitions

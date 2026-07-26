@@ -32,9 +32,17 @@ services:
     expose:
       - "8000"
 
-  # Reverse proxy con HTTPS automático (Let's Encrypt). Solo en el VPS.
+  # Reverse proxy con HTTPS automático (Let's Encrypt). Opcional (perfil
+  # "standalone-caddy"): en un VPS dedicado solo a este proyecto, levántalo
+  # con `docker compose --profile standalone-caddy up -d`. En un VPS
+  # compartido con otro proyecto que ya ocupe el 80/443 (un único reverse
+  # proxy para todo el host), no lo actives — conecta el servicio `api` a la
+  # red Docker de ese Caddy existente y añade un bloque de sitio ahí en su
+  # lugar (ver README > Despliegue en producción).
   caddy:
     image: caddy:2-alpine
+    profiles: ["standalone-caddy"]
+    env_file: .env  # Caddyfile lee $DOMAIN del entorno del proceso
     ports:
       - "80:80"
       - "443:443"

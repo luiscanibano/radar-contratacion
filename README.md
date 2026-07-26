@@ -56,12 +56,20 @@ Requisitos: [uv](https://docs.astral.sh/uv/), Docker, y una `ANTHROPIC_API_KEY`.
 uv sync --all-extras          # instala dependencias
 cp .env.example .env          # rellena las claves
 docker compose up -d postgres # levanta Postgres + pgvector
+make init-db                  # crea las tablas de la app (usuarios, suscripciones, alertas...)
 
 make ingest                   # descarga y carga un año de PLACSP en DuckDB
 make transform                # dbt build: seeds + modelos + tests de calidad
+make embeddings                # ingesta incremental de embeddings a Postgres+pgvector
 make orchestrate              # Dagster en localhost:3000 (ingesta -> dbt con linaje)
 make api                      # arranca FastAPI en localhost:8000
 ```
+
+La API es multi-usuario con auth JWT propia: hay que registrar un usuario antes
+de poder llamar a `/preguntar` o `/consultar` (`POST /auth/registro`). Stripe y
+Resend (alertas por email) son opcionales en desarrollo — sin sus claves en
+`.env`, `/billing/*` y el job de alertas fallan con un error explícito, pero el
+resto de la API funciona igual (ver `.env.example`).
 
 ## Modelo dbt
 
@@ -98,6 +106,57 @@ make evals-retrieval  # métricas de la búsqueda híbrida
 ```
 
 Detalle en [evals/README.md](evals/README.md).
+
+## Despliegue en producción (VPS)
+
+Sin Alembic ni CI/CD todavía: el despliegue es manual y el esquema de Postgres
+se aplica a mano (`make init-db` / `make embeddings`), igual que en desarrollo.
+
+1. **DNS**: registro **A** de `radarcontratacion.com` apuntando al IP del VPS
+   (necesario para que Caddy pueda emitir el certificado TLS con Let's Encrypt).
+2. **En el VPS**: clonar el repo, copiar `.env.example` a `.env` y rellenar
+   claves reales — incluidas `STRIPE_SECRET_KEY`/`STRIPE_WEBHOOK_SECRET` en
+   modo **live** (no test) y `RESEND_API_KEY` (requiere el dominio verificado
+   en Resend, ver `.env.example`). `DOMAIN=radarcontratacion.com`.
+   ```bash
+   git clone <repo> && cd radar-contratacion
+   cp .env.example .env   # y editar con las claves reales
+   docker compose up -d --build   # postgres + api (sin caddy, ver más abajo)
+   ```
+3. **Reverse proxy / TLS** — depende de si el VPS es solo para este proyecto:
+   - **VPS dedicado**: `docker compose --profile standalone-caddy up -d caddy`
+     levanta el Caddy incluido (usa `./Caddyfile` y `$DOMAIN` del `.env`).
+   - **VPS compartido con otro proyecto que ya ocupa el 80/443** (un único
+     reverse proxy para todo el host, nuestro caso real): no actives el
+     perfil `standalone-caddy`. En su lugar:
+     ```bash
+     # Conecta el contenedor de la API a la red del Caddy ya existente
+     docker network connect <red_del_otro_proyecto> radar-contratacion-api-1
+     ```
+     y añade un bloque de sitio a la Caddyfile de ese otro proyecto:
+     ```caddyfile
+     radarcontratacion.com {
+         reverse_proxy radar-contratacion-api-1:8000
+     }
+     ```
+     Recarga sin downtime del otro servicio con
+     `docker exec <nombre_del_otro_caddy> caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile`.
+4. **Esquema de Postgres** (una vez el contenedor de Postgres esté sano):
+   ```bash
+   docker compose run --rm api uv run python -c "from api.db import init_schema; init_schema()"
+   docker compose run --rm api uv run python -c "from search.db import init_schema; init_schema()"
+   ```
+5. **Verificar**: `curl https://radarcontratacion.com/health` (TLS válido,
+   `{"status": "ok"}`); registrar un usuario de prueba (`POST /auth/registro`)
+   para confirmar que la tabla `usuarios` responde.
+6. **Orquestación** (opcional, en el mismo VPS o aparte):
+   `docker compose --profile orchestration up -d dagster` para la ingesta
+   diaria, embeddings y el job de alertas.
+
+Los webhooks de Stripe deben apuntar a
+`https://radarcontratacion.com/billing/webhook` en el dashboard de Stripe
+(modo live) — el secreto que da esa pantalla es el `STRIPE_WEBHOOK_SECRET`
+de producción, distinto del de `stripe listen` en local.
 
 ## Roadmap (8 semanas)
 
