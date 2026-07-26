@@ -141,10 +141,20 @@ se aplica a mano (`make init-db` / `make embeddings`), igual que en desarrollo.
      ```
      Recarga sin downtime del otro servicio con
      `docker exec <nombre_del_otro_caddy> caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile`.
-4. **Esquema de Postgres** (una vez el contenedor de Postgres esté sano):
+     Caso real de este proyecto: VPS compartido con `fakenews-insight`, cuyo
+     Caddy (`fakenews-caddy`) vive en la red `vps_default` — mismo patrón,
+     sustituyendo los placeholders por esos nombres.
+4. **Esquema de Postgres** (una vez el contenedor de Postgres esté sano). Ojo:
+   `python` a secas, **no** `uv run python` — la imagen instala las
+   dependencias con `uv pip install --system` (sin `.venv` de proyecto), así
+   que `uv run` crearía una venv nueva desde cero sin los extras y fallaría
+   con `ModuleNotFoundError: psycopg`. Asegúrate también de que `.env` tiene
+   `POSTGRES_HOST=postgres` (el nombre del servicio en `docker-compose.yml`),
+   no `localhost` — ese es el valor por defecto de `.env.example`, pensado
+   para desarrollo fuera de Docker.
    ```bash
-   docker compose run --rm api uv run python -c "from api.db import init_schema; init_schema()"
-   docker compose run --rm api uv run python -c "from search.db import init_schema; init_schema()"
+   docker compose run --rm api python -c "from api.db import init_schema; init_schema()"
+   docker compose run --rm api python -c "from search.db import init_schema; init_schema()"
    ```
 5. **Verificar**: `curl https://radarcontratacion.com/health` (TLS válido,
    `{"status": "ok"}`); registrar un usuario de prueba (`POST /auth/registro`)
@@ -166,7 +176,9 @@ de producción, distinto del de `stripe listen` en local.
 4. ✅ Capa vectorial + búsqueda híbrida
 5. ✅ Agente conversacional (text-to-SQL + RAG)
 6. ✅ Evals + observabilidad
-7. Producto (auth, Stripe, alertas) + despliegue en VPS
+7. ✅ Producto (auth, Stripe, alertas) + despliegue en VPS — en producción en
+   [radarcontratacion.com](https://radarcontratacion.com); Stripe/Resend con
+   el código listo, pendientes de claves reales
 8. Servidor MCP + pulido + lanzamiento
 
 ## Aviso legal
