@@ -42,6 +42,9 @@ api = [
     # Trazas del agente. La API v4 (start_observation/as_type) no es
     # compatible con la de la v2, ver api/observabilidad.py.
     "langfuse>=4.0",
+    # Auth (semana 7a): hash de contraseñas y JWT.
+    "argon2-cffi>=23.1",
+    "pyjwt>=2.8",
 ]
 search = [
     "sentence-transformers>=3.0",  # embeddings locales (arrastra torch)

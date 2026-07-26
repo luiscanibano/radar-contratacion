@@ -34,6 +34,11 @@ class Settings(BaseSettings):
     postgres_user: str = "radar"
     postgres_password: str = "change-me"
 
+    # Auth. HS256 con secreto simétrico: suficiente para un único servicio
+    # (no hay necesidad de las claves pública/privada de RS256).
+    jwt_secret: str = "change-me"
+    jwt_expire_minutes: int = 60 * 24 * 7
+
     @property
     def postgres_dsn(self) -> str:
         return (

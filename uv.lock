@@ -3660,10 +3660,12 @@ analytics = [
 ]
 api = [
     { name = "anthropic" },
+    { name = "argon2-cffi" },
     { name = "fastapi" },
     { name = "langfuse" },
     { name = "pgvector" },
     { name = "psycopg", extra = ["binary"] },
+    { name = "pyjwt" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 ingestion = [
@@ -3699,6 +3701,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "anthropic", marker = "extra == 'api'", specifier = ">=0.34" },
+    { name = "argon2-cffi", marker = "extra == 'api'", specifier = ">=23.1" },
     { name = "dagster", marker = "extra == 'orchestration'", specifier = ">=1.7" },
     { name = "dagster-dbt", marker = "extra == 'orchestration'", specifier = ">=0.23" },
     { name = "dagster-webserver", marker = "extra == 'orchestration'", specifier = ">=1.7" },
@@ -3720,6 +3723,7 @@ requires-dist = [
     { name = "psycopg", extras = ["binary"], marker = "extra == 'search'", specifier = ">=3.2" },
     { name = "pydantic", specifier = ">=2.7" },
     { name = "pydantic-settings", specifier = ">=2.3" },
+    { name = "pyjwt", marker = "extra == 'api'", specifier = ">=2.8" },
     { name = "python-dotenv", specifier = ">=1.0" },
     { name = "scikit-learn", marker = "extra == 'analytics'", specifier = ">=1.5" },
     { name = "sentence-transformers", marker = "extra == 'search'", specifier = ">=3.0" },
