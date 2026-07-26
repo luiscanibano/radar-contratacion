@@ -45,6 +45,8 @@ api = [
     # Auth (semana 7a): hash de contraseñas y JWT.
     "argon2-cffi>=23.1",
     "pyjwt>=2.8",
+    # Billing (semana 7b).
+    "stripe>=11.0",
 ]
 search = [
     "sentence-transformers>=3.0",  # embeddings locales (arrastra torch)

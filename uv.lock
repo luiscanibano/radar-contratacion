@@ -3666,6 +3666,7 @@ api = [
     { name = "pgvector" },
     { name = "psycopg", extra = ["binary"] },
     { name = "pyjwt" },
+    { name = "stripe" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 ingestion = [
@@ -3728,6 +3729,7 @@ requires-dist = [
     { name = "scikit-learn", marker = "extra == 'analytics'", specifier = ">=1.5" },
     { name = "sentence-transformers", marker = "extra == 'search'", specifier = ">=3.0" },
     { name = "statsmodels", marker = "extra == 'analytics'", specifier = ">=0.14" },
+    { name = "stripe", marker = "extra == 'api'", specifier = ">=11.0" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'api'", specifier = ">=0.30" },
 ]
 provides-extras = ["ingestion", "transform", "orchestration", "analytics", "api", "search", "mcp"]
@@ -4504,6 +4506,19 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/34/0e/2408735aca9e764643196212f9069912100151414dd617d39ffc72d77eee/statsmodels-0.14.6-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:3414e40c073d725007a6603a18247ab7af3467e1af4a5e5a24e4c27bc26673b4", size = 10337587, upload-time = "2025-12-05T23:13:37.597Z" },
     { url = "https://files.pythonhosted.org/packages/0f/36/4d44f7035ab3c0b2b6a4c4ebb98dedf36246ccbc1b3e2f51ebcd7ac83abb/statsmodels-0.14.6-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:a518d3f9889ef920116f9fa56d0338069e110f823926356946dae83bc9e33e19", size = 10363350, upload-time = "2025-12-05T23:13:53.08Z" },
     { url = "https://files.pythonhosted.org/packages/26/33/f1652d0c59fa51de18492ee2345b65372550501ad061daa38f950be390b6/statsmodels-0.14.6-cp314-cp314-win_amd64.whl", hash = "sha256:151b73e29f01fe619dbce7f66d61a356e9d1fe5e906529b78807df9189c37721", size = 9588010, upload-time = "2025-12-05T23:14:07.28Z" },
+]
+
+[[package]]
+name = "stripe"
+version = "15.3.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "requests" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b6/a0/52b623a5c07238af6282dfc07ba8c8a9b332f4d7ef69d0006e8a52e6b34d/stripe-15.3.1.tar.gz", hash = "sha256:2f9a8d961e5c2ec19149fb4e0b47d9709d014a68592cdb1f4efd044abc8d2359", size = 1516385, upload-time = "2026-07-16T00:47:46.829Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/eb/7a/58f266c262bbf903e2eca438ef752ed0fcc7273c9a4bc42edc20effa962f/stripe-15.3.1-py3-none-any.whl", hash = "sha256:f7c87a9a9072db7316e9ba497b4dbaa1dbae51f67ca201ba6155fe8b6487e5e3", size = 2173610, upload-time = "2026-07-16T00:47:45.173Z" },
 ]
 
 [[package]]

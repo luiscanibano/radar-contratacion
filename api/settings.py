@@ -39,6 +39,18 @@ class Settings(BaseSettings):
     jwt_secret: str = "change-me"
     jwt_expire_minutes: int = 60 * 24 * 7
 
+    # Billing (Stripe). Sin claves, /billing/* devuelve error explícito en vez
+    # de fallar a medias (ver api/billing.py); el resto de la API funciona
+    # igual. Los price_id se crean en el dashboard de Stripe, uno por plan de
+    # pago (ver api/planes.py).
+    stripe_secret_key: str = ""
+    stripe_webhook_secret: str = ""
+    stripe_price_basico: str = ""
+    stripe_price_pro: str = ""
+    stripe_price_ilimitado: str = ""
+    billing_success_url: str = "http://localhost:8000/billing/exito"
+    billing_cancel_url: str = "http://localhost:8000/billing/cancelado"
+
     @property
     def postgres_dsn(self) -> str:
         return (
