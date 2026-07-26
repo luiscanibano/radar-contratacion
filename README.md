@@ -80,6 +80,25 @@ Capas `staging → intermediate → marts` sobre el DuckDB `raw`:
 Orquestado con Dagster + `dagster-dbt`: la ingesta (dlt) y cada modelo/seed/test
 de dbt son assets con linaje; los tests aparecen como *asset checks*.
 
+## Evals y observabilidad
+
+Cada respuesta del agente deja una **traza** (turnos, herramientas usadas,
+tokens, coste estimado, ratio de caché de prompt y latencias) en
+`data/trazas.jsonl` y, si hay claves, en **Langfuse**.
+
+La calidad se mide contra un **golden set** por dos vías que hay que superar a
+la vez: una comprobación determinista de qué herramienta usó el agente y un
+**LLM-as-judge** con un modelo más capaz que el suyo. La recuperación de la
+búsqueda híbrida se mide aparte con métricas de IR (`recall@k`, `nDCG@k`, `MRR`).
+
+```bash
+make evals            # golden set completo (usa la API)
+make evals-rapido     # solo comprobaciones deterministas, gratis
+make evals-retrieval  # métricas de la búsqueda híbrida
+```
+
+Detalle en [evals/README.md](evals/README.md).
+
 ## Roadmap (8 semanas)
 
 1. ✅ Ingesta PLACSP + modelo relacional
@@ -87,7 +106,7 @@ de dbt son assets con linaje; los tests aparecen como *asset checks*.
 3. ✅ Modelos estadísticos (anomalías, importe con incertidumbre)
 4. ✅ Capa vectorial + búsqueda híbrida
 5. ✅ Agente conversacional (text-to-SQL + RAG)
-6. Evals + observabilidad
+6. ✅ Evals + observabilidad
 7. Producto (auth, Stripe, alertas) + despliegue en VPS
 8. Servidor MCP + pulido + lanzamiento
 

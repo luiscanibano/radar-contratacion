@@ -48,7 +48,7 @@ def run_readonly_sql(query: str, limit: int = 100) -> dict[str, Any]:
     try:
         rel = con.sql(f"select * from ({query}) limit {limit}")
         cols = rel.columns
-        rows = [dict(zip(cols, r)) for r in rel.fetchall()]
+        rows = [dict(zip(cols, r, strict=True)) for r in rel.fetchall()]
         return {"columns": cols, "rows": rows, "row_count": len(rows)}
     except Exception as exc:  # noqa: BLE001 — devolvemos el error al agente para que corrija
         return {"error": str(exc)}

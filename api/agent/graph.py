@@ -8,6 +8,7 @@ se migra a LangGraph sin cambiar las tools.
 from __future__ import annotations
 
 import json
+import time
 
 from anthropic import Anthropic, APIError
 
@@ -18,6 +19,7 @@ from api.agent.tools import (
     buscar_licitaciones,
     run_readonly_sql,
 )
+from api.observabilidad import LlamadaModelo, Traza, UsoTool
 from api.settings import settings
 
 SYSTEM_PROMPT = f"""
@@ -47,11 +49,46 @@ Esquema disponible (para `consultar_datos`):
 """.strip()
 
 
+def _registrar_uso(traza: Traza, llamada: LlamadaModelo, response) -> None:
+    """Copia los contadores de `usage` a la traza, si la respuesta los trae.
+
+    `getattr` en vez de acceso directo: los dobles de test no simulan `usage`,
+    y un campo nuevo o ausente en el SDK no debe tumbar una respuesta buena.
+    """
+    uso = getattr(response, "usage", None)
+    if uso is None:
+        return
+    llamada.input_tokens = getattr(uso, "input_tokens", 0) or 0
+    llamada.output_tokens = getattr(uso, "output_tokens", 0) or 0
+    llamada.cache_read_input_tokens = getattr(uso, "cache_read_input_tokens", 0) or 0
+    llamada.cache_creation_input_tokens = getattr(uso, "cache_creation_input_tokens", 0) or 0
+
+
 def answer(question: str, max_turns: int = 5) -> str:
+    """Respuesta en texto plano. Envoltorio de `responder()` para quien no quiera la traza."""
+    return responder(question, max_turns=max_turns)[0]
+
+
+def responder(question: str, max_turns: int = 5) -> tuple[str, Traza]:
+    """Responde y devuelve además la traza (turnos, tools, tokens, coste, latencia).
+
+    No persiste nada: emitir la traza es responsabilidad de quien llama
+    (`api/main.py`, `evals/run.py`), vía `api.observabilidad.emitir`. Así el
+    agente no depende de la red ni ensucia el disco durante los tests.
+    """
     client = Anthropic(api_key=settings.anthropic_api_key)
     messages = [{"role": "user", "content": question}]
+    traza = Traza(pregunta=question, modelo=settings.claude_model)
+    arranque = time.perf_counter()
 
-    for _ in range(max_turns):
+    def _cerrar(texto: str) -> tuple[str, Traza]:
+        traza.respuesta = texto
+        traza.latencia_total_s = time.perf_counter() - arranque
+        return texto, traza
+
+    for turno in range(1, max_turns + 1):
+        llamada = LlamadaModelo(turno=turno)
+        inicio_llamada = time.perf_counter()
         try:
             response = client.messages.create(
                 model=settings.claude_model,
@@ -70,19 +107,29 @@ def answer(question: str, max_turns: int = 5) -> str:
                 messages=messages,
             )
         except APIError as exc:
-            return (
+            llamada.latencia_s = time.perf_counter() - inicio_llamada
+            traza.llamadas.append(llamada)
+            traza.error = f"APIError: {exc.message}"
+            return _cerrar(
                 f"No he podido contactar con el modelo ({exc.message}). "
                 "Inténtalo de nuevo en unos segundos."
             )
 
+        llamada.latencia_s = time.perf_counter() - inicio_llamada
+        llamada.stop_reason = response.stop_reason
+        _registrar_uso(traza, llamada, response)
+        traza.llamadas.append(llamada)
+
         if response.stop_reason != "tool_use":
-            return "".join(b.text for b in response.content if b.type == "text")
+            return _cerrar("".join(b.text for b in response.content if b.type == "text"))
 
         messages.append({"role": "assistant", "content": response.content})
         tool_results = []
         for block in response.content:
             if block.type != "tool_use":
                 continue
+            uso = UsoTool(turno=turno, nombre=block.name, entrada=dict(block.input or {}))
+            inicio_tool = time.perf_counter()
             try:
                 if block.name == "consultar_datos":
                     result = run_readonly_sql(block.input["query"])
@@ -94,6 +141,11 @@ def answer(question: str, max_turns: int = 5) -> str:
                     result = {"error": f"Herramienta desconocida: {block.name}"}
             except Exception as exc:  # noqa: BLE001 — un tool_use mal formado no debe tumbar el agente
                 result = {"error": f"No se pudo ejecutar la herramienta: {exc}"}
+            uso.latencia_s = time.perf_counter() - inicio_tool
+            uso.error = result.get("error")
+            uso.ok = uso.error is None
+            uso.filas = result.get("row_count")
+            traza.tools.append(uso)
             tool_results.append(
                 {
                     "type": "tool_result",
@@ -103,4 +155,5 @@ def answer(question: str, max_turns: int = 5) -> str:
             )
         messages.append({"role": "user", "content": tool_results})
 
-    return "No he podido resolver la consulta en el número de pasos permitido."
+    traza.error = f"max_turns ({max_turns}) agotado"
+    return _cerrar("No he podido resolver la consulta en el número de pasos permitido.")

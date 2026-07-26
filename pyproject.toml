@@ -39,6 +39,9 @@ api = [
     "anthropic>=0.34",
     "psycopg[binary]>=3.2",
     "pgvector>=0.3",
+    # Trazas del agente. La API v4 (start_observation/as_type) no es
+    # compatible con la de la v2, ver api/observabilidad.py.
+    "langfuse>=4.0",
 ]
 search = [
     "sentence-transformers>=3.0",  # embeddings locales (arrastra torch)
@@ -48,10 +51,11 @@ search = [
 mcp = [
     "mcp>=1.0",
 ]
-evals = [
-    "ragas>=0.1",
-    "langfuse>=2.40",
-]
+# Sin extra propio: los evals solo necesitan `anthropic` y `pydantic` (extra
+# `api`) y, para las métricas de recuperación, el extra `search`. Se quitó
+# `ragas` porque su versión actual no importa con el stack de langchain
+# instalado; las métricas de recuperación viven en evals/retrieval.py
+# (ver evals/README.md).
 
 [dependency-groups]
 dev = [

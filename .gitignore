@@ -11,6 +11,10 @@ data/*.duckdb.wal
 data/raw/
 data/staging/
 data/*.log
+# Trazas del agente e informes de evals: telemetría de ejecuciones locales,
+# contienen preguntas y respuestas reales y crecen sin parar.
+data/trazas.jsonl
+evals/informes/
 *.zip
 *.atom
 !ingestion/tests/fixtures/*.atom

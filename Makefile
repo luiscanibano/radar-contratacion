@@ -1,4 +1,4 @@
-.PHONY: help install ingest transform test-dbt orchestrate api mcp evals lint
+.PHONY: help install ingest transform test-dbt orchestrate api mcp evals evals-rapido evals-retrieval lint
 
 help:  ## Muestra esta ayuda
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
@@ -29,8 +29,14 @@ api:  ## Arranca FastAPI en localhost:8000
 mcp:  ## Arranca el servidor MCP (stdio)
 	uv run python -m mcp_server.server
 
-evals:  ## Ejecuta la suite de evaluación del agente
+evals:  ## Ejecuta la suite de evaluación del agente (LLM-as-judge + tools)
 	uv run python -m evals.run
+
+evals-rapido:  ## Evals sin juez LLM: solo comprobaciones deterministas (gratis)
+	uv run python -m evals.run --sin-juez
+
+evals-retrieval:  ## Métricas de recuperación de la búsqueda híbrida
+	uv run python -m evals.retrieval
 
 lint:  ## Formatea y revisa el código
 	uv run ruff format . && uv run ruff check --fix .
