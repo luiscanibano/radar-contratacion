@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Radar de Contratación Pública — inteligencia sobre licitaciones públicas españolas</title>
+<meta name="description" content="Pregunta en lenguaje natural sobre las licitaciones y adjudicaciones del sector público español. Datos abiertos oficiales, alertas por email y señales estadísticas de riesgo.">
+<style>
+  :root {
+    --fondo: #ffffff;
+    --tinta: #1a2233;
+    --tinta-suave: #5a6478;
+    --acento: #0d5c63;
+    --acento-tinta: #ffffff;
+    --borde: #e3e7ee;
+    --tarjeta: #f7f9fb;
+    --destacado: #0d5c63;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fondo: #10141c;
+      --tinta: #e8ecf3;
+      --tinta-suave: #9aa4b5;
+      --acento: #35a7b1;
+      --acento-tinta: #0b1016;
+      --borde: #26303f;
+      --tarjeta: #171d28;
+    }
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--fondo);
+    color: var(--tinta);
+    line-height: 1.6;
+  }
+  .contenedor { max-width: 960px; margin: 0 auto; padding: 0 1.25rem; }
+  header.cabecera {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.25rem 0;
+  }
+  .marca { font-weight: 700; font-size: 1.05rem; text-decoration: none; color: var(--tinta); }
+  .marca span { color: var(--acento); }
+  nav.enlaces { display: flex; gap: 1.25rem; align-items: center; }
+  nav.enlaces a { color: var(--tinta-suave); text-decoration: none; font-size: .95rem; }
+  nav.enlaces a:hover { color: var(--tinta); }
+  .boton {
+    display: inline-block; background: var(--acento); color: var(--acento-tinta);
+    padding: .6rem 1.2rem; border-radius: 8px; text-decoration: none;
+    font-weight: 600; font-size: .95rem; border: none; cursor: pointer;
+  }
+  .boton:hover { filter: brightness(1.1); }
+  .boton.secundario {
+    background: transparent; color: var(--tinta); border: 1px solid var(--borde);
+  }
+  .heroe { padding: 4.5rem 0 3.5rem; text-align: center; }
+  .heroe h1 { font-size: clamp(1.8rem, 4.5vw, 2.8rem); line-height: 1.2; max-width: 21ch; margin: 0 auto; }
+  .heroe p.sub {
+    color: var(--tinta-suave); font-size: 1.15rem; max-width: 54ch;
+    margin: 1.25rem auto 2rem;
+  }
+  .heroe .acciones { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; }
+  .ejemplo {
+    margin: 3rem auto 0; max-width: 640px; text-align: left;
+    background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px;
+    padding: 1.25rem 1.5rem; font-size: .95rem;
+  }
+  .ejemplo .pregunta { font-weight: 600; }
+  .ejemplo .pregunta::before { content: "› "; color: var(--acento); }
+  .ejemplo .respuesta { color: var(--tinta-suave); margin-top: .5rem; }
+  section { padding: 3rem 0; }
+  section h2 { font-size: 1.5rem; margin-bottom: 1.75rem; text-align: center; }
+  .rejilla { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; }
+  .tarjeta {
+    background: var(--tarjeta); border: 1px solid var(--borde);
+    border-radius: 12px; padding: 1.5rem;
+  }
+  .tarjeta h3 { font-size: 1.05rem; margin-bottom: .5rem; }
+  .tarjeta p { color: var(--tinta-suave); font-size: .95rem; }
+  .precios .tarjeta { display: flex; flex-direction: column; text-align: center; }
+  .precios .tarjeta.destacada { border-color: var(--acento); border-width: 2px; }
+  .precios .precio { font-size: 1.9rem; font-weight: 700; margin: .5rem 0 .1rem; }
+  .precios .precio small { font-size: .95rem; font-weight: 400; color: var(--tinta-suave); }
+  .precios .cuota { color: var(--tinta-suave); font-size: .95rem; margin-bottom: 1.25rem; }
+  .precios .boton { margin-top: auto; }
+  .mcp pre {
+    background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px;
+    padding: 1.25rem; overflow-x: auto; font-size: .85rem; line-height: 1.5;
+    text-align: left; max-width: 640px; margin: 0 auto;
+  }
+  footer {
+    border-top: 1px solid var(--borde); padding: 2rem 0 3rem;
+    color: var(--tinta-suave); font-size: .875rem;
+  }
+  footer p + p { margin-top: .75rem; }
+  footer a { color: var(--tinta-suave); }
+</style>
+</head>
+<body>
+
+<div class="contenedor">
+  <header class="cabecera">
+    <a class="marca" href="/">Radar de <span>Contratación Pública</span></a>
+    <nav class="enlaces">
+      <a href="#precios">Precios</a>
+      <a href="/docs">API</a>
+      <a class="boton secundario" href="/app">Entrar</a>
+    </nav>
+  </header>
+</div>
+
+<main>
+  <div class="contenedor">
+    <section class="heroe">
+      <h1>Pregunta a los datos de la contratación pública española</h1>
+      <p class="sub">
+        Todas las licitaciones y adjudicaciones del sector público, ingeridas de los
+        datos abiertos oficiales y listas para responder en lenguaje natural.
+        Sin SQL, sin descargar ficheros de 2&nbsp;GB.
+      </p>
+      <div class="acciones">
+        <a class="boton" href="/app">Crear cuenta gratis</a>
+        <a class="boton secundario" href="#precios">Ver precios</a>
+      </div>
+      <div class="ejemplo">
+        <p class="pregunta">¿Qué ayuntamientos adjudicaron más contratos de obras el año pasado y por qué importe?</p>
+        <p class="respuesta">El agente traduce tu pregunta a consultas sobre los datos reales
+        y contesta con cifras verificables — incluyendo señales estadísticas de
+        anomalías cuando las hay.</p>
+      </div>
+    </section>
+
+    <section id="funciones">
+      <h2>Qué puedes hacer</h2>
+      <div class="rejilla">
+        <div class="tarjeta">
+          <h3>Agente conversacional</h3>
+          <p>Preguntas en castellano sobre licitaciones, adjudicatarios, importes y
+          plazos. Text-to-SQL y búsqueda híbrida (semántica + texto) sobre el corpus completo.</p>
+        </div>
+        <div class="tarjeta">
+          <h3>Alertas por email</h3>
+          <p>Guarda una búsqueda («obras de accesibilidad en Castilla y León») y recibe
+          un aviso cuando se publiquen licitaciones nuevas que encajen.</p>
+        </div>
+        <div class="tarjeta">
+          <h3>Señales de riesgo</h3>
+          <p>Modelos estadísticos que marcan adjudicaciones atípicas: bajas temerarias,
+          importes fuera de rango, concentración de adjudicatarios. Señales a revisar,
+          nunca acusaciones.</p>
+        </div>
+        <div class="tarjeta">
+          <h3>Servidor MCP</h3>
+          <p>Conecta Claude (u otro cliente MCP) directamente a los datos: las mismas
+          herramientas del agente, disponibles desde tu propio asistente.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="precios" class="precios">
+      <h2>Precios</h2>
+      <div class="rejilla">
+        <div class="tarjeta">
+          <h3>Gratis</h3>
+          <p class="precio">0 €<small>/mes</small></p>
+          <p class="cuota">10 preguntas al mes</p>
+          <a class="boton secundario" href="/app">Empezar</a>
+        </div>
+        <div class="tarjeta">
+          <h3>Básico</h3>
+          <p class="precio">4,99 €<small>/mes</small></p>
+          <p class="cuota">200 preguntas al mes</p>
+          <a class="boton secundario" href="/app">Suscribirse</a>
+        </div>
+        <div class="tarjeta destacada">
+          <h3>Pro</h3>
+          <p class="precio">14,99 €<small>/mes</small></p>
+          <p class="cuota">1.000 preguntas al mes</p>
+          <a class="boton" href="/app">Suscribirse</a>
+        </div>
+        <div class="tarjeta">
+          <h3>Ilimitado</h3>
+          <p class="precio">29,99 €<small>/mes</small></p>
+          <p class="cuota">Sin límite de preguntas</p>
+          <a class="boton secundario" href="/app">Suscribirse</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="mcp">
+      <h2>¿Usas Claude? Conéctalo por MCP</h2>
+      <pre><code>{
+  "mcpServers": {
+    "radar-contratacion": {
+      "type": "http",
+      "url": "https://radarcontratacion.com/mcp",
+      "headers": { "Authorization": "Bearer &lt;tu-token-JWT&gt;" }
+    }
+  }
+}</code></pre>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div class="contenedor">
+    <p><strong>Aviso legal.</strong> Este servicio usa exclusivamente datos abiertos oficiales
+    de la Plataforma de Contratación del Sector Público. El análisis se presenta de forma
+    agregada y las señales de riesgo describen patrones estadísticos a revisar, nunca
+    acusaciones. Cumplimiento RGPD por diseño.</p>
+    <p>Radar de Contratación Pública · <a href="/docs">Documentación de la API</a></p>
+  </div>
+</footer>
+
+</body>
+</html>

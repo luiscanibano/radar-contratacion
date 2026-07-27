@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 from contextlib import AsyncExitStack, asynccontextmanager
+from pathlib import Path
 
 from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException, Request, status
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from api.agent.graph import responder
@@ -38,6 +40,33 @@ async def _lifespan(app: FastAPI):
 
 app = FastAPI(title="Radar de Contratación Pública", version="0.1.0", lifespan=_lifespan)
 app.mount("/mcp", BearerAuthASGIMiddleware(_mcp_app))
+
+# Interfaz web mínima: HTML estático autocontenido (sin framework JS), servido
+# por la propia API. Fuera del esquema OpenAPI para que /docs siga siendo
+# solo la referencia de la API.
+_STATIC = Path(__file__).parent / "static"
+
+
+@app.get("/", include_in_schema=False)
+def portada() -> FileResponse:
+    return FileResponse(_STATIC / "index.html")
+
+
+@app.get("/app", include_in_schema=False)
+def panel() -> FileResponse:
+    return FileResponse(_STATIC / "app.html")
+
+
+@app.get("/billing/exito", include_in_schema=False)
+def billing_exito() -> FileResponse:
+    """Página de retorno de Stripe Checkout (ver billing_success_url en settings)."""
+    return FileResponse(_STATIC / "billing_exito.html")
+
+
+@app.get("/billing/cancelado", include_in_schema=False)
+def billing_cancelado() -> FileResponse:
+    """Página de retorno de Stripe Checkout (ver billing_cancel_url en settings)."""
+    return FileResponse(_STATIC / "billing_cancelado.html")
 
 
 class Pregunta(BaseModel):

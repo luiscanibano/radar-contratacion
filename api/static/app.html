@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel — Radar de Contratación Pública</title>
+<style>
+  :root {
+    --fondo: #ffffff;
+    --tinta: #1a2233;
+    --tinta-suave: #5a6478;
+    --acento: #0d5c63;
+    --acento-tinta: #ffffff;
+    --borde: #e3e7ee;
+    --tarjeta: #f7f9fb;
+    --error: #b3372f;
+    --exito: #1e7d43;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fondo: #10141c;
+      --tinta: #e8ecf3;
+      --tinta-suave: #9aa4b5;
+      --acento: #35a7b1;
+      --acento-tinta: #0b1016;
+      --borde: #26303f;
+      --tarjeta: #171d28;
+      --error: #e07a72;
+      --exito: #5fc98a;
+    }
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--fondo); color: var(--tinta); line-height: 1.6;
+  }
+  .contenedor { max-width: 760px; margin: 0 auto; padding: 0 1.25rem 3rem; }
+  header.cabecera {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.25rem 0; margin-bottom: 1.5rem;
+  }
+  .marca { font-weight: 700; text-decoration: none; color: var(--tinta); }
+  .marca span { color: var(--acento); }
+  .sesion { display: flex; gap: .75rem; align-items: center; font-size: .9rem; color: var(--tinta-suave); }
+  .tarjeta {
+    background: var(--tarjeta); border: 1px solid var(--borde);
+    border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;
+  }
+  h2 { font-size: 1.15rem; margin-bottom: 1rem; }
+  label { display: block; font-size: .9rem; margin-bottom: .25rem; color: var(--tinta-suave); }
+  input[type="email"], input[type="password"], input[type="text"], textarea {
+    width: 100%; padding: .6rem .75rem; border: 1px solid var(--borde);
+    border-radius: 8px; background: var(--fondo); color: var(--tinta);
+    font: inherit; margin-bottom: .9rem;
+  }
+  textarea { resize: vertical; min-height: 5.5rem; }
+  .boton {
+    display: inline-block; background: var(--acento); color: var(--acento-tinta);
+    padding: .55rem 1.1rem; border-radius: 8px; font-weight: 600;
+    font-size: .95rem; border: none; cursor: pointer; text-decoration: none;
+  }
+  .boton:hover { filter: brightness(1.1); }
+  .boton:disabled { opacity: .55; cursor: wait; }
+  .boton.secundario { background: transparent; color: var(--tinta); border: 1px solid var(--borde); }
+  .boton.pequeno { padding: .3rem .7rem; font-size: .85rem; }
+  .alterna { margin-top: .75rem; font-size: .9rem; color: var(--tinta-suave); }
+  .alterna a { color: var(--acento); cursor: pointer; }
+  .mensaje { font-size: .92rem; margin-top: .75rem; }
+  .mensaje.error { color: var(--error); }
+  .mensaje.exito { color: var(--exito); }
+  .respuesta {
+    white-space: pre-wrap; background: var(--fondo); border: 1px solid var(--borde);
+    border-radius: 8px; padding: 1rem; margin-top: 1rem; font-size: .95rem;
+  }
+  ul.alertas { list-style: none; }
+  ul.alertas li {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 1rem; padding: .6rem 0; border-bottom: 1px solid var(--borde);
+    font-size: .95rem;
+  }
+  ul.alertas li:last-child { border-bottom: none; }
+  .planes { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .75rem; }
+  .planes .plan {
+    border: 1px solid var(--borde); border-radius: 8px; padding: 1rem;
+    text-align: center; background: var(--fondo);
+  }
+  .planes .plan strong { display: block; }
+  .planes .plan small { color: var(--tinta-suave); display: block; margin-bottom: .6rem; }
+  .oculto { display: none; }
+</style>
+</head>
+<body>
+
+<div class="contenedor">
+  <header class="cabecera">
+    <a class="marca" href="/">Radar de <span>Contratación Pública</span></a>
+    <div class="sesion oculto" id="sesion">
+      <span id="sesion-email"></span>
+      <button class="boton secundario pequeno" id="btn-salir">Salir</button>
+    </div>
+  </header>
+
+  <!-- ===== Autenticación ===== -->
+  <section id="vista-auth" class="tarjeta oculto">
+    <h2 id="auth-titulo">Iniciar sesión</h2>
+    <form id="form-auth">
+      <label for="auth-email">Email</label>
+      <input type="email" id="auth-email" autocomplete="username" required>
+      <label for="auth-password">Contraseña</label>
+      <input type="password" id="auth-password" autocomplete="current-password" required minlength="8">
+      <button class="boton" type="submit" id="auth-boton">Entrar</button>
+    </form>
+    <p class="alterna" id="auth-alterna">
+      ¿No tienes cuenta? <a id="auth-cambiar">Regístrate gratis</a>
+    </p>
+    <p class="mensaje error oculto" id="auth-error"></p>
+  </section>
+
+  <!-- ===== Panel ===== -->
+  <div id="vista-panel" class="oculto">
+
+    <section class="tarjeta">
+      <h2>Pregunta al agente</h2>
+      <form id="form-preguntar">
+        <textarea id="pregunta" placeholder="p. ej. ¿Cuáles fueron las mayores adjudicaciones de obras en 2024?" required></textarea>
+        <button class="boton" type="submit" id="btn-preguntar">Preguntar</button>
+      </form>
+      <p class="mensaje error oculto" id="preguntar-error"></p>
+      <div class="respuesta oculto" id="respuesta"></div>
+    </section>
+
+    <section class="tarjeta">
+      <h2>Alertas por email</h2>
+      <form id="form-alerta">
+        <label for="alerta-texto">Búsqueda a vigilar</label>
+        <input type="text" id="alerta-texto" placeholder="p. ej. obras de accesibilidad en Castilla y León" required>
+        <button class="boton secundario" type="submit">Crear alerta</button>
+      </form>
+      <p class="mensaje error oculto" id="alertas-error"></p>
+      <ul class="alertas" id="lista-alertas"></ul>
+    </section>
+
+    <section class="tarjeta">
+      <h2>Ampliar plan</h2>
+      <div class="planes">
+        <div class="plan">
+          <strong>Básico</strong><small>4,99 €/mes · 200 preguntas</small>
+          <button class="boton secundario pequeno" data-plan="basico">Elegir</button>
+        </div>
+        <div class="plan">
+          <strong>Pro</strong><small>14,99 €/mes · 1.000 preguntas</small>
+          <button class="boton pequeno" data-plan="pro">Elegir</button>
+        </div>
+        <div class="plan">
+          <strong>Ilimitado</strong><small>29,99 €/mes · sin límite</small>
+          <button class="boton secundario pequeno" data-plan="ilimitado">Elegir</button>
+        </div>
+      </div>
+      <p class="mensaje error oculto" id="billing-error"></p>
+    </section>
+
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const $ = (id) => document.getElementById(id);
+  const CLAVE_TOKEN = "radar_token";
+  let modoRegistro = false;
+
+  // --- sesión ---------------------------------------------------------------
+
+  const token = () => localStorage.getItem(CLAVE_TOKEN);
+
+  function cerrarSesion() {
+    localStorage.removeItem(CLAVE_TOKEN);
+    mostrarAuth();
+  }
+
+  async function llamar(ruta, opciones = {}) {
+    const cabeceras = { "Content-Type": "application/json", ...(opciones.headers || {}) };
+    if (token()) cabeceras["Authorization"] = `Bearer ${token()}`;
+    const respuesta = await fetch(ruta, { ...opciones, headers: cabeceras });
+    if (respuesta.status === 401 && token()) {
+      // Sesión caducada: fuera el token y de vuelta al login.
+      cerrarSesion();
+      throw new Error("Tu sesión ha caducado. Vuelve a iniciar sesión.");
+    }
+    return respuesta;
+  }
+
+  async function detalleError(respuesta, porDefecto) {
+    try {
+      const cuerpo = await respuesta.json();
+      return cuerpo.detail || porDefecto;
+    } catch {
+      return porDefecto;
+    }
+  }
+
+  // --- vistas ---------------------------------------------------------------
+
+  function mostrarAuth() {
+    $("vista-auth").classList.remove("oculto");
+    $("vista-panel").classList.add("oculto");
+    $("sesion").classList.add("oculto");
+  }
+
+  async function mostrarPanel() {
+    const respuesta = await llamar("/auth/me");
+    if (!respuesta.ok) { cerrarSesion(); return; }
+    const yo = await respuesta.json();
+    $("sesion-email").textContent = yo.email;
+    $("vista-auth").classList.add("oculto");
+    $("vista-panel").classList.remove("oculto");
+    $("sesion").classList.remove("oculto");
+    cargarAlertas();
+  }
+
+  function ponerMensaje(id, texto) {
+    const nodo = $(id);
+    if (!texto) { nodo.classList.add("oculto"); return; }
+    nodo.textContent = texto;
+    nodo.classList.remove("oculto");
+  }
+
+  // --- autenticación --------------------------------------------------------
+
+  $("auth-cambiar").addEventListener("click", () => {
+    modoRegistro = !modoRegistro;
+    $("auth-titulo").textContent = modoRegistro ? "Crear cuenta" : "Iniciar sesión";
+    $("auth-boton").textContent = modoRegistro ? "Registrarme" : "Entrar";
+    $("auth-alterna").firstChild.textContent = modoRegistro ? "¿Ya tienes cuenta? " : "¿No tienes cuenta? ";
+    $("auth-cambiar").textContent = modoRegistro ? "Inicia sesión" : "Regístrate gratis";
+    $("auth-password").autocomplete = modoRegistro ? "new-password" : "current-password";
+    ponerMensaje("auth-error", "");
+  });
+
+  $("form-auth").addEventListener("submit", async (evento) => {
+    evento.preventDefault();
+    ponerMensaje("auth-error", "");
+    const credenciales = {
+      email: $("auth-email").value.trim(),
+      password: $("auth-password").value,
+    };
+    const ruta = modoRegistro ? "/auth/registro" : "/auth/login";
+    try {
+      const respuesta = await llamar(ruta, { method: "POST", body: JSON.stringify(credenciales) });
+      if (respuesta.status === 409) {
+        ponerMensaje("auth-error", "Ese email ya está registrado. Inicia sesión.");
+        return;
+      }
+      if (!respuesta.ok) {
+        ponerMensaje("auth-error", await detalleError(respuesta, "No se pudo iniciar sesión."));
+        return;
+      }
+      const datos = await respuesta.json();
+      localStorage.setItem(CLAVE_TOKEN, datos.access_token);
+      $("auth-password").value = "";
+      mostrarPanel();
+    } catch (error) {
+      ponerMensaje("auth-error", error.message || "Error de red. Inténtalo de nuevo.");
+    }
+  });
+
+  $("btn-salir").addEventListener("click", cerrarSesion);
+
+  // --- preguntar ------------------------------------------------------------
+
+  $("form-preguntar").addEventListener("submit", async (evento) => {
+    evento.preventDefault();
+    ponerMensaje("preguntar-error", "");
+    $("respuesta").classList.add("oculto");
+    const boton = $("btn-preguntar");
+    boton.disabled = true;
+    boton.textContent = "Pensando…";
+    try {
+      const respuesta = await llamar("/preguntar", {
+        method: "POST",
+        body: JSON.stringify({ texto: $("pregunta").value }),
+      });
+      if (respuesta.status === 402) {
+        ponerMensaje("preguntar-error",
+          "Has agotado la cuota mensual de tu plan. Amplíala en la sección de abajo.");
+        return;
+      }
+      if (!respuesta.ok) {
+        ponerMensaje("preguntar-error", await detalleError(respuesta, "El agente no pudo responder."));
+        return;
+      }
+      const datos = await respuesta.json();
+      $("respuesta").textContent = datos.respuesta;
+      $("respuesta").classList.remove("oculto");
+    } catch (error) {
+      ponerMensaje("preguntar-error", error.message || "Error de red. Inténtalo de nuevo.");
+    } finally {
+      boton.disabled = false;
+      boton.textContent = "Preguntar";
+    }
+  });
+
+  // --- alertas --------------------------------------------------------------
+
+  async function cargarAlertas() {
+    ponerMensaje("alertas-error", "");
+    try {
+      const respuesta = await llamar("/alertas");
+      if (!respuesta.ok) return;
+      const alertas = await respuesta.json();
+      const lista = $("lista-alertas");
+      lista.replaceChildren();
+      for (const alerta of alertas) {
+        const elemento = document.createElement("li");
+        const texto = document.createElement("span");
+        texto.textContent = alerta.consulta_texto;
+        const borrar = document.createElement("button");
+        borrar.className = "boton secundario pequeno";
+        borrar.textContent = "Borrar";
+        borrar.addEventListener("click", async () => {
+          await llamar(`/alertas/${alerta.id}`, { method: "DELETE" });
+          cargarAlertas();
+        });
+        elemento.append(texto, borrar);
+        lista.append(elemento);
+      }
+    } catch (error) {
+      ponerMensaje("alertas-error", error.message || "No se pudieron cargar las alertas.");
+    }
+  }
+
+  $("form-alerta").addEventListener("submit", async (evento) => {
+    evento.preventDefault();
+    ponerMensaje("alertas-error", "");
+    try {
+      const respuesta = await llamar("/alertas", {
+        method: "POST",
+        body: JSON.stringify({ consulta_texto: $("alerta-texto").value }),
+      });
+      if (!respuesta.ok) {
+        ponerMensaje("alertas-error", await detalleError(respuesta, "No se pudo crear la alerta."));
+        return;
+      }
+      $("alerta-texto").value = "";
+      cargarAlertas();
+    } catch (error) {
+      ponerMensaje("alertas-error", error.message || "Error de red. Inténtalo de nuevo.");
+    }
+  });
+
+  // --- billing --------------------------------------------------------------
+
+  document.querySelectorAll("[data-plan]").forEach((boton) => {
+    boton.addEventListener("click", async () => {
+      ponerMensaje("billing-error", "");
+      boton.disabled = true;
+      try {
+        const respuesta = await llamar("/billing/checkout", {
+          method: "POST",
+          body: JSON.stringify({ plan: boton.dataset.plan }),
+        });
+        if (!respuesta.ok) {
+          ponerMensaje("billing-error", await detalleError(respuesta, "No se pudo iniciar el pago."));
+          return;
+        }
+        const datos = await respuesta.json();
+        window.location.href = datos.checkout_url;
+      } catch (error) {
+        ponerMensaje("billing-error", error.message || "Error de red. Inténtalo de nuevo.");
+      } finally {
+        boton.disabled = false;
+      }
+    });
+  });
+
+  // --- arranque -------------------------------------------------------------
+
+  if (token()) mostrarPanel(); else mostrarAuth();
+})();
+</script>
+
+</body>
+</html>

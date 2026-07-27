@@ -10,23 +10,12 @@ from __future__ import annotations
 
 import jwt
 import pytest
-from fastapi.testclient import TestClient
 
 from api.auth import Usuario, create_access_token, decode_token
-from api.main import app
 
-
-@pytest.fixture(scope="module")
-def cliente():
-    # `with` es necesario para que se ejecute el lifespan combinado (ver
-    # api/main.py::_lifespan) que arranca el session manager del MCP — sin
-    # él, cualquier petición a /mcp con auth válida revienta con
-    # RuntimeError en vez de responder. Scope de módulo porque
-    # `StreamableHTTPSessionManager.run()` solo admite una entrada por
-    # instancia y `mcp` (mcp_server/server.py) es un singleton a nivel de
-    # módulo — un TestClient por test reentraría el lifespan y reventaría.
-    with TestClient(app) as client:
-        yield client
+# El TestClient viene de la fixture de sesión `cliente` (conftest.py): tiene
+# que ser único por proceso porque el session manager del MCP solo admite un
+# lifespan de por vida.
 
 
 def test_decode_token_acepta_un_token_valido():
