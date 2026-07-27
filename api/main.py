@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from contextlib import AsyncExitStack, asynccontextmanager
+
 from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException, Request, status
 from pydantic import BaseModel
 
@@ -18,8 +20,24 @@ from api.auth import (
 from api.billing import crear_checkout_session, procesar_webhook
 from api.cuota import consumir_cuota
 from api.observabilidad import emitir
+from mcp_server.auth_middleware import BearerAuthASGIMiddleware
+from mcp_server.server import mcp
 
-app = FastAPI(title="Radar de Contratación Pública", version="0.1.0")
+_mcp_app = mcp.streamable_http_app()
+
+
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    # El StreamableHTTPSessionManager del MCP montado abajo necesita su propio
+    # lifespan activo (crea/limpia sus tareas de sesión) — `app.mount(...)` no
+    # lo propaga solo, hay que entrarlo a mano junto al de la API.
+    async with AsyncExitStack() as pila:
+        await pila.enter_async_context(_mcp_app.router.lifespan_context(app))
+        yield
+
+
+app = FastAPI(title="Radar de Contratación Pública", version="0.1.0", lifespan=_lifespan)
+app.mount("/mcp", BearerAuthASGIMiddleware(_mcp_app))
 
 
 class Pregunta(BaseModel):

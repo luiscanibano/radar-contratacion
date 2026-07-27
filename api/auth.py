@@ -84,15 +84,23 @@ def autenticar_usuario(email: str, password: str) -> Usuario | None:
     return Usuario(id=usuario_id, email=email)
 
 
+def decode_token(token: str) -> Usuario:
+    """Decodifica y valida un JWT propio. Lanza ValueError si es inválido/caducado."""
+    try:
+        payload = jwt.decode(token, settings.jwt_secret, algorithms=["HS256"])
+    except jwt.PyJWTError as exc:
+        raise ValueError("Token inválido o caducado") from exc
+    return Usuario(id=int(payload["sub"]), email=payload["email"])
+
+
 def usuario_actual(
     credenciales: HTTPAuthorizationCredentials = Depends(_bearer),  # noqa: B008
 ) -> Usuario:
     """Dependencia de FastAPI: exige `Authorization: Bearer <token>` válido."""
     try:
-        payload = jwt.decode(credenciales.credentials, settings.jwt_secret, algorithms=["HS256"])
-    except jwt.PyJWTError as exc:
+        return decode_token(credenciales.credentials)
+    except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token inválido o caducado",
+            detail=str(exc),
         ) from exc
-    return Usuario(id=int(payload["sub"]), email=payload["email"])

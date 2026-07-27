@@ -168,6 +168,44 @@ Los webhooks de Stripe deben apuntar a
 (modo live) — el secreto que da esa pantalla es el `STRIPE_WEBHOOK_SECRET`
 de producción, distinto del de `stripe listen` en local.
 
+## Servidor MCP
+
+Las mismas tools del agente conversacional (`consultar_datos`,
+`buscar_licitaciones`) se exponen también vía [MCP](https://modelcontextprotocol.io)
+para conectarlas directamente a un cliente MCP, de dos formas:
+
+- **Local, stdio, sin auth** (Claude Desktop/Code en tu propia máquina):
+  ```bash
+  make mcp
+  ```
+  ```json
+  {
+    "mcpServers": {
+      "radar-contratacion": {
+        "command": "uv",
+        "args": ["run", "python", "-m", "mcp_server.server"],
+        "cwd": "/ruta/al/proyecto"
+      }
+    }
+  }
+  ```
+- **Remoto, HTTP** (producción): montado bajo `/mcp` dentro de la misma API
+  y contenedor (`api/main.py`), no hace falta ningún servicio Docker nuevo.
+  Se autentica con el mismo JWT que `/auth/login` — cabecera
+  `Authorization: Bearer <token>` en cada petición, sin cuota mensual (igual
+  que `/consultar`: exige estar logueado, no consume el límite de preguntas
+  del plan). Config de cliente MCP remoto:
+  ```json
+  {
+    "mcpServers": {
+      "radar-contratacion": {
+        "url": "https://radarcontratacion.com/mcp",
+        "headers": { "Authorization": "Bearer <token>" }
+      }
+    }
+  }
+  ```
+
 ## Roadmap (8 semanas)
 
 1. ✅ Ingesta PLACSP + modelo relacional
