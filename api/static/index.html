@@ -49,6 +49,7 @@ FORM: consola del analista, candidato 6 de la lista propia; staging propio
     --consola-ambar: #f0b429;
     --sans: "Archivo", system-ui, sans-serif;
     --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", monospace;
+    --curva: cubic-bezier(0.23, 1, 0.32, 1);
   }
   @media (prefers-color-scheme: dark) {
     :root {
@@ -75,9 +76,23 @@ FORM: consola del analista, candidato 6 de la lista propia; staging propio
   .contenedor { max-width: 1080px; margin: 0 auto; padding: 0 1.5rem; }
 
   /* ===== cabecera ===== */
+  #centinela { position: absolute; top: 0; width: 1px; height: 1px; }
+  .barra {
+    position: sticky; top: 0; z-index: 10;
+    transition: background-color 250ms ease, box-shadow 250ms ease;
+  }
+  .barra.pegada {
+    background: color-mix(in srgb, var(--papel) 86%, transparent);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 1px 0 var(--regla);
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    .barra.pegada { background: var(--papel); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  }
   header.cabecera {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 1.1rem 0; border-bottom: 1px solid var(--regla);
+    padding: 1.1rem 0;
   }
   .marca {
     font-weight: 680; font-size: 1rem; letter-spacing: -0.01em;
@@ -172,34 +187,77 @@ FORM: consola del analista, candidato 6 de la lista propia; staging propio
   .paso { transition: opacity 400ms cubic-bezier(0.23, 1, 0.32, 1); }
   .paso.pendiente { opacity: 0; }
 
-  /* ===== registro de funciones ===== */
+  /* ===== deslizador de funciones ===== */
   section { padding: 4.5rem 0 1rem; }
   section h2 {
     font-size: 1.05rem; font-weight: 560; color: var(--tinta-suave);
     margin-bottom: 2.25rem;
   }
-  .registro { border-top: 1px solid var(--regla); }
-  .registro .fila {
-    display: grid; grid-template-columns: 9rem minmax(0, 5fr) minmax(0, 6fr);
-    gap: 2rem; padding: 1.9rem 0; border-bottom: 1px solid var(--regla);
+  .pestanas {
+    position: relative; display: flex; gap: 1.75rem;
+    border-bottom: 1px solid var(--regla);
   }
-  .registro .termino {
-    font-family: var(--mono); font-size: .8rem; color: var(--acento);
-    padding-top: .45rem;
+  .pestanas [role="tab"] {
+    font-family: var(--mono); font-size: .8rem; color: var(--tinta-suave);
+    background: none; border: none; cursor: pointer;
+    padding: 0 0 .8rem; transition: color 150ms ease;
   }
-  .registro h3 {
+  .pestanas [role="tab"][aria-selected="true"] { color: var(--acento); }
+  @media (hover: hover) and (pointer: fine) {
+    .pestanas [role="tab"]:hover { color: var(--tinta); }
+    .pestanas [role="tab"][aria-selected="true"]:hover { color: var(--acento); }
+  }
+  .indicador {
+    position: absolute; bottom: -1px; left: 0; height: 2px; width: 0;
+    background: var(--acento);
+    transition: transform 300ms var(--curva), width 300ms var(--curva);
+  }
+  .ventana { overflow: hidden; touch-action: pan-y; }
+  .pista {
+    display: flex;
+    transition: transform 450ms var(--curva);
+  }
+  .pista.arrastre { transition: none; cursor: grabbing; user-select: none; }
+  .panel {
+    flex: 0 0 100%; min-width: 0;
+    display: grid; grid-template-columns: minmax(0, 11fr) minmax(0, 9fr);
+    gap: 2.5rem; align-items: center; padding: 2.5rem 0 .5rem;
+  }
+  .panel h3 {
     font-size: 1.45rem; font-weight: 620; letter-spacing: -0.02em;
     line-height: 1.25; text-wrap: balance;
   }
-  .registro p { color: var(--tinta-suave); font-size: .98rem; text-wrap: pretty; }
+  .panel div p { color: var(--tinta-suave); font-size: .98rem; text-wrap: pretty; margin-top: .6rem; }
+  .muestra {
+    background: var(--consola); color: var(--consola-tinta);
+    border: 1px solid var(--consola-regla); border-radius: 10px;
+    font-family: var(--mono); font-size: .78rem; line-height: 1.7;
+    padding: 1rem 1.2rem;
+  }
+  .muestra.ambar { color: var(--consola-ambar); }
+  .muestra.ambar::before { content: "■ "; }
 
   /* ===== mcp ===== */
+  .mcp .codigo { position: relative; }
   .mcp pre {
     background: var(--consola); color: var(--consola-tinta);
     border: 1px solid var(--consola-regla);
     border-radius: 10px; padding: 1.4rem 1.5rem; overflow-x: auto;
     font-family: var(--mono); font-size: .82rem; line-height: 1.7;
     box-shadow: 0 16px 40px rgb(9 11 12 / .18);
+  }
+  .copiar {
+    position: absolute; top: .8rem; right: .9rem;
+    font-family: var(--mono); font-size: .72rem; color: var(--consola-suave);
+    background: rgb(255 255 255 / .05); border: 1px solid var(--consola-regla);
+    border-radius: 6px; padding: .3rem .65rem; cursor: pointer;
+    transition: transform 160ms var(--curva), color 160ms ease,
+                filter 180ms ease, opacity 180ms ease;
+  }
+  .copiar:active { transform: scale(0.96); }
+  .copiar.cambiando { filter: blur(2px); opacity: .6; }
+  @media (hover: hover) and (pointer: fine) {
+    .copiar:hover { color: var(--consola-tinta); }
   }
   .mcp .nota { color: var(--tinta-suave); font-size: .95rem; margin-top: 1rem; max-width: 60ch; }
   .mcp .nota a { color: var(--acento); }
@@ -212,6 +270,10 @@ FORM: consola del analista, candidato 6 de la lista propia; staging propio
   .precios .plan {
     padding: 1.75rem 1.5rem 1.9rem; display: flex; flex-direction: column;
     border-bottom: 1px solid var(--regla);
+    transition: background-color 200ms ease;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .precios .plan:hover { background: color-mix(in srgb, var(--tinta) 4%, var(--papel)); }
   }
   .precios .plan + .plan { border-left: 1px solid var(--regla); }
   .precios .plan.destacado { box-shadow: inset 0 2px 0 var(--acento); }
@@ -225,6 +287,32 @@ FORM: consola del analista, candidato 6 de la lista propia; staging propio
   .precios .cuota { color: var(--tinta-suave); font-size: .9rem; margin-bottom: 1.6rem; }
   .precios .boton { margin-top: auto; align-self: flex-start; }
 
+  @media (prefers-reduced-motion: reduce) {
+    .pista, .indicador, .barra { transition: none; }
+  }
+
+  /* ===== revelados al entrar en viewport (una sola vez) ===== */
+  @media (prefers-reduced-motion: no-preference) {
+    html.js .revelar { opacity: 0; }
+    html.js .revelar.visto {
+      opacity: 1;
+      animation: subir 550ms var(--curva) backwards;
+    }
+    @keyframes subir {
+      from { opacity: 0; transform: translateY(12px); }
+    }
+    html.js .precios .plan:nth-child(2).visto { animation-delay: 70ms; }
+    html.js .precios .plan:nth-child(3).visto { animation-delay: 140ms; }
+    html.js .precios .plan:nth-child(4).visto { animation-delay: 210ms; }
+    html.js .mcp .codigo { clip-path: inset(0 0 100% 0); }
+    html.js .mcp .codigo.visto {
+      animation: desvelar 650ms var(--curva) forwards;
+    }
+    @keyframes desvelar {
+      to { clip-path: inset(-60px -60px -60px -60px); }
+    }
+  }
+
   /* ===== pie ===== */
   footer {
     border-top: 1px solid var(--regla); margin-top: 4.5rem;
@@ -237,8 +325,7 @@ FORM: consola del analista, candidato 6 de la lista propia; staging propio
   /* ===== responsive ===== */
   @media (max-width: 900px) {
     .heroe { grid-template-columns: 1fr; gap: 2.5rem; padding-top: 3.25rem; }
-    .registro .fila { grid-template-columns: 1fr; gap: .5rem; padding: 1.6rem 0; }
-    .registro .termino { padding-top: 0; }
+    .panel { grid-template-columns: 1fr; gap: 1.5rem; padding: 2rem 0 .25rem; }
     .precios .tabla { grid-template-columns: 1fr 1fr; }
     .precios .plan:nth-child(odd) { border-left: none; }
     .precios .plan:nth-child(3) { border-left: none; }
@@ -254,18 +341,22 @@ FORM: consola del analista, candidato 6 de la lista propia; staging propio
     .consola { padding: 1.2rem 1.1rem 1.3rem; font-size: .78rem; }
   }
 </style>
+<script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
 
-<div class="contenedor">
-  <header class="cabecera">
-    <a class="marca" href="/">Radar de Contratación Pública</a>
-    <nav class="enlaces">
-      <a href="#precios">Precios</a>
-      <a href="/docs">API</a>
-      <a class="boton secundario" href="/app">Entrar</a>
-    </nav>
-  </header>
+<div id="centinela" aria-hidden="true"></div>
+<div class="barra" id="barra">
+  <div class="contenedor">
+    <header class="cabecera">
+      <a class="marca" href="/">Radar de Contratación Pública</a>
+      <nav class="enlaces">
+        <a href="#precios">Precios</a>
+        <a href="/docs">API</a>
+        <a class="boton secundario" href="/app">Entrar</a>
+      </nav>
+    </header>
+  </div>
 </div>
 
 <main>
@@ -307,32 +398,58 @@ FORM: consola del analista, candidato 6 de la lista propia; staging propio
 
     <section id="funciones">
       <h2>Qué hace</h2>
-      <div class="registro">
-        <div class="fila">
-          <span class="termino">preguntar</span>
-          <h3>Un agente que contesta en castellano</h3>
-          <p>Text-to-SQL y búsqueda híbrida (semántica y texto) sobre el corpus
-          completo de licitaciones, adjudicatarios, importes y plazos. Cada
-          respuesta, con cifras verificables.</p>
+      <div class="deslizador revelar" id="deslizador">
+        <div class="pestanas" role="tablist" aria-label="Funciones del producto" id="pestanas">
+          <button role="tab" type="button" id="tab-0" aria-selected="true" aria-controls="panel-0">preguntar</button>
+          <button role="tab" type="button" id="tab-1" aria-selected="false" aria-controls="panel-1">vigilar</button>
+          <button role="tab" type="button" id="tab-2" aria-selected="false" aria-controls="panel-2">señalar</button>
+          <span class="indicador" id="indicador" aria-hidden="true"></span>
         </div>
-        <div class="fila">
-          <span class="termino">vigilar</span>
-          <h3>Alertas cuando se publica lo tuyo</h3>
-          <p>Guarda una búsqueda («obras de accesibilidad en Castilla y León»)
-          y recibe un email cuando entren licitaciones nuevas que encajen.</p>
-        </div>
-        <div class="fila">
-          <span class="termino">señalar</span>
-          <h3>Anomalías estadísticas, marcadas</h3>
-          <p>Bajas temerarias, importes fuera de rango, concentración de
-          adjudicatarios. Señales a revisar, nunca acusaciones.</p>
+        <div class="ventana" id="ventana">
+          <div class="pista" id="pista">
+            <div class="panel" role="tabpanel" id="panel-0" aria-labelledby="tab-0">
+              <div>
+                <h3>Un agente que contesta en castellano</h3>
+                <p>Text-to-SQL y búsqueda híbrida (semántica y texto) sobre el
+                corpus completo de licitaciones, adjudicatarios, importes y
+                plazos. Cada respuesta, con cifras verificables.</p>
+              </div>
+              <p class="muestra">› ¿cuánto adjudicó mi ayuntamiento este año y a quién?</p>
+            </div>
+            <div class="panel" role="tabpanel" id="panel-1" aria-labelledby="tab-1">
+              <div>
+                <h3>Alertas cuando se publica lo tuyo</h3>
+                <p>Guarda una búsqueda («obras de accesibilidad en Castilla y
+                León») y recibe un email cuando entren licitaciones nuevas que
+                encajen.</p>
+              </div>
+              <p class="muestra">correo enviado: hay licitaciones nuevas que encajan con tu búsqueda</p>
+            </div>
+            <div class="panel" role="tabpanel" id="panel-2" aria-labelledby="tab-2">
+              <div>
+                <h3>Anomalías estadísticas, marcadas</h3>
+                <p>Bajas temerarias, importes fuera de rango, concentración de
+                adjudicatarios. Señales a revisar, nunca acusaciones.</p>
+              </div>
+              <p class="muestra ambar">señal: baja atípica respecto al presupuesto de licitación (ejemplo)</p>
+            </div>
+          </div>
         </div>
       </div>
+      <noscript>
+        <style>
+          .pestanas { display: none; }
+          .pista { display: block; }
+          .panel { border-top: 1px solid var(--regla); }
+        </style>
+      </noscript>
     </section>
 
     <section class="mcp">
       <h2>Para desarrolladores</h2>
-      <pre><code>{
+      <div class="codigo">
+      <button class="copiar" type="button" id="copiar" aria-label="Copiar la configuración MCP">copiar</button>
+      <pre><code id="config-mcp">{
   "mcpServers": {
     "radar-contratacion": {
       "type": "http",
@@ -341,6 +458,7 @@ FORM: consola del analista, candidato 6 de la lista propia; staging propio
     }
   }
 }</code></pre>
+      </div>
       <p class="nota">Conecta Claude, u otro cliente MCP, directamente a los
       datos: las mismas herramientas del agente, desde tu propio asistente.
       También hay <a href="/docs">API REST documentada</a>.</p>
@@ -349,25 +467,25 @@ FORM: consola del analista, candidato 6 de la lista propia; staging propio
     <section id="precios" class="precios">
       <h2>Precios</h2>
       <div class="tabla">
-        <div class="plan">
+        <div class="plan revelar">
           <span class="nombre">Gratis</span>
           <p class="importe">0 €<small> /mes</small></p>
           <p class="cuota">10 preguntas al mes</p>
           <a class="boton secundario" href="/app#registro">Crear cuenta gratis</a>
         </div>
-        <div class="plan">
+        <div class="plan revelar">
           <span class="nombre">Básico</span>
           <p class="importe">4,99 €<small> /mes</small></p>
           <p class="cuota">200 preguntas al mes</p>
           <a class="boton secundario" href="/app">Suscribirse</a>
         </div>
-        <div class="plan destacado">
+        <div class="plan destacado revelar">
           <span class="nombre">Pro</span>
           <p class="importe">14,99 €<small> /mes</small></p>
           <p class="cuota">1.000 preguntas al mes</p>
           <a class="boton" href="/app">Suscribirse</a>
         </div>
-        <div class="plan">
+        <div class="plan revelar">
           <span class="nombre">Ilimitado</span>
           <p class="importe">29,99 €<small> /mes</small></p>
           <p class="cuota">Sin límite de preguntas</p>
@@ -391,34 +509,185 @@ FORM: consola del analista, candidato 6 de la lista propia; staging propio
 <script>
 (() => {
   "use strict";
-  // Único momento de motion con autor: la consulta del héroe se resuelve una
-  // vez. Sin JS o con reduced-motion, todo queda visible en su estado final.
+  const $ = (id) => document.getElementById(id);
   const reducido = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (reducido) return;
 
-  const texto = document.getElementById("texto-pregunta");
-  const cursor = document.getElementById("cursor");
-  const pasos = document.querySelectorAll(".paso");
-  const completa = texto.textContent;
+  // --- héroe: la consulta se resuelve una vez -------------------------------
 
-  pasos.forEach((p) => p.classList.add("pendiente"));
-  texto.textContent = "";
-  cursor.hidden = false;
+  if (!reducido) {
+    const texto = $("texto-pregunta");
+    const cursor = $("cursor");
+    const pasos = document.querySelectorAll(".paso");
+    const completa = texto.textContent;
 
-  let i = 0;
-  const teclear = () => {
-    if (i <= completa.length) {
-      texto.textContent = completa.slice(0, i);
-      i += 1;
-      setTimeout(teclear, 26);
+    pasos.forEach((p) => p.classList.add("pendiente"));
+    texto.textContent = "";
+    cursor.hidden = false;
+
+    let i = 0;
+    const teclear = () => {
+      if (i <= completa.length) {
+        texto.textContent = completa.slice(0, i);
+        i += 1;
+        setTimeout(teclear, 26);
+        return;
+      }
+      cursor.hidden = true;
+      pasos.forEach((p, n) => {
+        setTimeout(() => p.classList.remove("pendiente"), 260 + n * 90);
+      });
+    };
+    setTimeout(teclear, 350);
+  }
+
+  // --- barra: vidrio solo con scroll (centinela, sin listener de scroll) ----
+
+  new IntersectionObserver(([entrada]) => {
+    $("barra").classList.toggle("pegada", !entrada.isIntersecting);
+  }).observe($("centinela"));
+
+  // --- revelados de una sola vez ---------------------------------------------
+
+  const observador = new IntersectionObserver((entradas) => {
+    for (const entrada of entradas) {
+      if (!entrada.isIntersecting) continue;
+      entrada.target.classList.add("visto");
+      observador.unobserve(entrada.target);
+    }
+  }, { threshold: 0.2 });
+  document.querySelectorAll(".revelar, .mcp .codigo").forEach((e) => observador.observe(e));
+
+  // --- deslizador de funciones ----------------------------------------------
+
+  const pista = $("pista");
+  const ventana = $("ventana");
+  const pestanas = [...document.querySelectorAll('#pestanas [role="tab"]')];
+  const paneles = [...pista.children];
+  const total = paneles.length;
+  let indice = 0;
+
+  const indicador = $("indicador");
+  const medirIndicador = () => {
+    const tab = pestanas[indice];
+    indicador.style.width = `${tab.offsetWidth}px`;
+    indicador.style.transform = `translateX(${tab.offsetLeft}px)`;
+  };
+
+  const aplicar = (nuevo) => {
+    indice = Math.max(0, Math.min(total - 1, nuevo));
+    pista.style.transform = `translateX(${-indice * 100}%)`;
+    pestanas.forEach((t, i) => t.setAttribute("aria-selected", String(i === indice)));
+    paneles.forEach((p, i) => p.toggleAttribute("inert", i !== indice));
+    medirIndicador();
+  };
+
+  document.fonts.ready.then(medirIndicador);
+  addEventListener("resize", medirIndicador);
+  aplicar(0);
+
+  // Autoavance suave hasta la primera interacción; en pausa con la pestaña
+  // oculta o el puntero encima. Nada de esto con reduced-motion.
+  let temporizador = null;
+  let detenido = reducido;
+  const arrancar = () => {
+    if (detenido || temporizador) return;
+    temporizador = setInterval(() => aplicar((indice + 1) % total), 6500);
+  };
+  const pausar = () => { clearInterval(temporizador); temporizador = null; };
+  const detener = () => { detenido = true; pausar(); };
+  arrancar();
+  document.addEventListener("visibilitychange", () => {
+    document.hidden ? pausar() : arrancar();
+  });
+  const deslizador = $("deslizador");
+  deslizador.addEventListener("mouseenter", pausar);
+  deslizador.addEventListener("mouseleave", arrancar);
+
+  pestanas.forEach((tab, i) => {
+    tab.addEventListener("click", () => { detener(); aplicar(i); });
+  });
+  $("pestanas").addEventListener("keydown", (evento) => {
+    const paso = { ArrowRight: 1, ArrowLeft: -1 }[evento.key];
+    if (!paso) return;
+    evento.preventDefault();
+    detener();
+    aplicar((indice + paso + total) % total);
+    pestanas[indice].focus();
+  });
+
+  // Arrastre con captura de puntero, amortiguación en los bordes y snap por
+  // velocidad: un golpe rápido basta aunque no llegue al umbral de distancia.
+  let arrastrando = false;
+  let origenX = 0;
+  let ultimoX = 0;
+  let ultimoT = 0;
+  let velocidad = 0;
+
+  ventana.addEventListener("pointerdown", (evento) => {
+    if (arrastrando) return; // protección multi-toque
+    arrastrando = true;
+    detener();
+    origenX = ultimoX = evento.clientX;
+    ultimoT = performance.now();
+    velocidad = 0;
+    pista.classList.add("arrastre");
+    ventana.setPointerCapture(evento.pointerId);
+  });
+
+  ventana.addEventListener("pointermove", (evento) => {
+    if (!arrastrando) return;
+    const ahora = performance.now();
+    if (ahora > ultimoT) {
+      velocidad = (evento.clientX - ultimoX) / (ahora - ultimoT);
+    }
+    ultimoX = evento.clientX;
+    ultimoT = ahora;
+    const ancho = ventana.clientWidth;
+    let delta = evento.clientX - origenX;
+    const base = -indice * ancho;
+    // Amortiguación: más allá del primer o último panel, el arrastre cede.
+    if ((indice === 0 && delta > 0) || (indice === total - 1 && delta < 0)) {
+      delta *= 0.35;
+    }
+    pista.style.transform = `translateX(${base + delta}px)`;
+  });
+
+  const soltar = () => {
+    if (!arrastrando) return;
+    arrastrando = false;
+    pista.classList.remove("arrastre");
+    const ancho = ventana.clientWidth;
+    const delta = ultimoX - origenX;
+    let destino = indice;
+    if (Math.abs(delta) > ancho * 0.25 || Math.abs(velocidad) > 0.11) {
+      destino = indice + (delta < 0 ? 1 : -1);
+    }
+    aplicar(destino);
+  };
+  ventana.addEventListener("pointerup", soltar);
+  ventana.addEventListener("pointercancel", soltar);
+
+  // --- copiar configuración MCP ----------------------------------------------
+
+  const copiar = $("copiar");
+  let reponer = null;
+  const rotular = (etiqueta) => {
+    copiar.classList.add("cambiando");
+    setTimeout(() => {
+      copiar.textContent = etiqueta;
+      copiar.classList.remove("cambiando");
+    }, 140);
+  };
+  copiar.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText($("config-mcp").innerText);
+    } catch {
       return;
     }
-    cursor.hidden = true;
-    pasos.forEach((p, n) => {
-      setTimeout(() => p.classList.remove("pendiente"), 260 + n * 90);
-    });
-  };
-  setTimeout(teclear, 350);
+    rotular("copiado");
+    clearTimeout(reponer);
+    reponer = setTimeout(() => rotular("copiar"), 2000);
+  });
 })();
 </script>
 

@@ -299,9 +299,13 @@ estado vacío es una fila más en tinta suave, no un empty-state ilustrado.
 
 ### Navigation
 Cabecera de una línea: marca (680) a la izquierda, enlaces en tinta suave (a
-tinta en hover, 150ms) y un botón secundario de sesión a la derecha; separada
-del contenido por una hairline. En móvil (≤620px) los enlaces textuales
-desaparecen y quedan marca y botón.
+tinta en hover, 150ms) y un botón secundario de sesión a la derecha. En la
+landing es sticky y arranca transparente: solo al hacer scroll gana fondo de
+papel translúcido (`color-mix` 86% + `backdrop-filter: blur(10px)`, 250ms) y
+una hairline inferior como sombra de 1px; el estado se conmuta con un
+IntersectionObserver sobre un centinela (nunca un listener de scroll) y hay
+fallback sólido bajo `prefers-reduced-transparency`. En móvil (≤620px) los
+enlaces textuales desaparecen y quedan marca y botón.
 
 ### Mensajes de estado
 Texto plano de .95rem bajo el formulario que los provoca: `--error` o
@@ -315,17 +319,34 @@ Tabler Icons (MIT), SVG inline de trazo (`stroke-width: 1.5`,
 fuentes de iconos ni emojis.
 
 ### Motion
-- **Un momento con autor por superficie.** En la landing: la consulta del
-  héroe se teclea una vez (26ms por carácter tras 350ms, cursor parpadeando a
-  1.1s `steps(1)`) y los resultados se revelan escalonados: opacidad 400ms
+- **El momento protagonista.** En la landing: la consulta del héroe se teclea
+  una vez (26ms por carácter tras 350ms, cursor parpadeando a 1.1s
+  `steps(1)`) y los resultados se revelan escalonados: opacidad 400ms
   `cubic-bezier(0.23, 1, 0.32, 1)`, arrancando a 260ms y con escalón de 90ms
   por paso. Sin JS o con `prefers-reduced-motion`, todo el contenido queda
   visible en su estado final desde el primer render.
-- **Micro-feedback:** solo el `scale(0.97)` de los botones (160ms, la misma
-  curva) y transiciones de color de 150–160ms.
+- **Deslizador de funciones (landing).** Pestañas mono con indicador de 2px
+  que se desliza entre ellas (300ms); pista con `transition: transform 450ms`
+  interrumpible (transición CSS, nunca keyframes). Arrastre con
+  `setPointerCapture`, protección multi-toque, amortiguación 0.35 en los
+  bordes y snap por velocidad (umbral 0.11 px/ms) además del de distancia
+  (25% del ancho). Autoavance cada 6.5s que muere con la primera interacción
+  y se pausa con hover o pestaña oculta; desactivado con reduced-motion.
+- **Revelados de una sola vez.** Al entrar en viewport (IntersectionObserver,
+  threshold 0.2, `unobserve` tras disparar): subida de 12px + opacidad en
+  550ms; los planes de precios escalonan 70ms; el bloque de código se desvela
+  con `clip-path: inset` en 650ms. Keyframes con `backwards` para no
+  contaminar las transiciones de hover con retardos. Sin JS o con
+  reduced-motion, todo visible (los estados ocultos viven tras `html.js` y
+  `prefers-reduced-motion: no-preference`).
+- **Morfo de estado.** El botón «copiar» del bloque MCP cruza sus etiquetas
+  con `filter: blur(2px)` + opacidad (180ms) y `scale(0.96)` al pulsar.
+- **Micro-feedback:** `scale(0.97)` de los botones (160ms, la misma curva),
+  fondo de fila en hover de precios (200ms) y transiciones de color de
+  150–160ms.
 - **La Regla de la Curva Única.** Toda animación con desplazamiento u opacidad
-  usa `cubic-bezier(0.23, 1, 0.32, 1)`; los cambios de color usan `ease`. No
-  se introducen curvas nuevas.
+  usa `cubic-bezier(0.23, 1, 0.32, 1)` (token `--curva`); los cambios de
+  color usan `ease`. No se introducen curvas nuevas.
 - **La Regla del Respeto al Movimiento.** Todo hover vive tras `@media
   (hover: hover) and (pointer: fine)`; toda animación, tras
   `prefers-reduced-motion: no-preference` (o un early-return en JS). El estado
@@ -355,9 +376,11 @@ fuentes de iconos ni emojis.
   fuera de mensajes de estado en superficies Operate.
 - **Don't** introducir un segundo color de acento, degradados o rellenos
   decorativos; el cobalto trabaja solo.
-- **Don't** añadir animaciones ambientales, parallax o transiciones de
-  entrada por sección: cada superficie tiene como mucho un momento de motion
-  con autor.
+- **Don't** añadir animaciones ambientales, en bucle o parallax. Los
+  revelados por scroll son de un solo disparo, cada sección con un sabor
+  distinto (subida, escalonado, desvelado) pero siempre la misma curva; el
+  único bucle permitido es el parpadeo del cursor del héroe y el autoavance
+  del deslizador hasta la primera interacción.
 - **Don't** enlazar fuentes ni scripts de terceros (Google Fonts, CDNs);
   rompe el compromiso de autocontención.
 - **Don't** usar radios distintos de 6px (controles) y 10px (paneles), ni
