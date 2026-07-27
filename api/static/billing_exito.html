@@ -5,32 +5,40 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Suscripción completada — Radar de Contratación Pública</title>
 <style>
-  :root { --fondo:#ffffff; --tinta:#1a2233; --tinta-suave:#5a6478; --acento:#0d5c63; --acento-tinta:#ffffff; --borde:#e3e7ee; --tarjeta:#f7f9fb; }
+  :root { --fondo:#ffffff; --tinta:#1a2233; --tinta-suave:#5a6478; --acento:#0d5c63; --acento-tinta:#ffffff; --borde:#e3e7ee; --tarjeta:#f7f9fb; --acento-hover:#0a4a50; --exito:#1e7d43; }
   @media (prefers-color-scheme: dark) {
-    :root { --fondo:#10141c; --tinta:#e8ecf3; --tinta-suave:#9aa4b5; --acento:#35a7b1; --acento-tinta:#0b1016; --borde:#26303f; --tarjeta:#171d28; }
+    :root { --fondo:#10141c; --tinta:#e8ecf3; --tinta-suave:#9aa4b5; --acento:#35a7b1; --acento-tinta:#0b1016; --borde:#26303f; --tarjeta:#171d28; --acento-hover:#4bb8c1; --exito:#5fc98a; }
   }
   * { margin:0; padding:0; box-sizing:border-box; }
   body {
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     background: var(--fondo); color: var(--tinta); line-height: 1.6;
-    min-height: 100vh; display: grid; place-items: center; padding: 1.25rem;
+    min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 1.25rem;
   }
   .tarjeta {
     background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px;
     padding: 2.5rem; max-width: 480px; text-align: center;
   }
-  .icono { font-size: 2.5rem; }
-  h1 { font-size: 1.4rem; margin: .75rem 0 .5rem; }
-  p { color: var(--tinta-suave); margin-bottom: 1.5rem; }
+  .icono { color: var(--exito); }
+  h1 { font-size: 1.4rem; letter-spacing: -0.02em; margin: .75rem 0 .5rem; }
+  p { color: var(--tinta-suave); margin-bottom: 1.5rem; text-wrap: pretty; }
   .boton {
     display: inline-block; background: var(--acento); color: var(--acento-tinta);
     padding: .6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600;
+    transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1), background-color 160ms ease;
   }
+  .boton:active { transform: scale(0.97); }
+  @media (hover: hover) and (pointer: fine) { .boton:hover { background: var(--acento-hover); } }
+  .boton:focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }
 </style>
 </head>
 <body>
   <div class="tarjeta">
-    <div class="icono">✅</div>
+    <!-- Icono: Tabler Icons, circle-check (MIT) -->
+    <svg class="icono" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M12 3a9 9 0 1 1 0 18a9 9 0 0 1 0 -18z" />
+      <path d="M9 12l2 2l4 -4" />
+    </svg>
     <h1>Suscripción completada</h1>
     <p>El pago se ha procesado correctamente. Tu nueva cuota estará activa en unos
     segundos, en cuanto Stripe nos confirme la suscripción.</p>

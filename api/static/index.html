@@ -14,7 +14,7 @@
     --acento-tinta: #ffffff;
     --borde: #e3e7ee;
     --tarjeta: #f7f9fb;
-    --destacado: #0d5c63;
+    --acento-hover: #0a4a50;
   }
   @media (prefers-color-scheme: dark) {
     :root {
@@ -25,6 +25,7 @@
       --acento-tinta: #0b1016;
       --borde: #26303f;
       --tarjeta: #171d28;
+      --acento-hover: #4bb8c1;
     }
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -42,24 +43,45 @@
   .marca { font-weight: 700; font-size: 1.05rem; text-decoration: none; color: var(--tinta); }
   .marca span { color: var(--acento); }
   nav.enlaces { display: flex; gap: 1.25rem; align-items: center; }
-  nav.enlaces a { color: var(--tinta-suave); text-decoration: none; font-size: .95rem; }
-  nav.enlaces a:hover { color: var(--tinta); }
+  nav.enlaces a:not(.boton) { color: var(--tinta-suave); text-decoration: none; font-size: .95rem; transition: color 150ms ease; }
   .boton {
     display: inline-block; background: var(--acento); color: var(--acento-tinta);
     padding: .6rem 1.2rem; border-radius: 8px; text-decoration: none;
     font-weight: 600; font-size: .95rem; border: none; cursor: pointer;
+    transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1),
+                background-color 160ms ease, border-color 160ms ease;
   }
-  .boton:hover { filter: brightness(1.1); }
+  .boton:active { transform: scale(0.97); }
   .boton.secundario {
     background: transparent; color: var(--tinta); border: 1px solid var(--borde);
   }
+  @media (hover: hover) and (pointer: fine) {
+    nav.enlaces a:not(.boton):hover { color: var(--tinta); }
+    .boton:hover { background: var(--acento-hover); }
+    .boton.secundario:hover { background: transparent; border-color: var(--tinta-suave); }
+  }
+  :is(a, button):focus-visible {
+    outline: 2px solid var(--acento); outline-offset: 2px; border-radius: 8px;
+  }
   .heroe { padding: 4.5rem 0 3.5rem; text-align: center; }
-  .heroe h1 { font-size: clamp(1.8rem, 4.5vw, 2.8rem); line-height: 1.2; max-width: 21ch; margin: 0 auto; }
+  .heroe h1 {
+    font-size: clamp(1.8rem, 4.5vw, 2.8rem); line-height: 1.2; letter-spacing: -0.02em;
+    max-width: 28ch; margin: 0 auto; text-wrap: balance;
+  }
   .heroe p.sub {
     color: var(--tinta-suave); font-size: 1.15rem; max-width: 54ch;
-    margin: 1.25rem auto 2rem;
+    margin: 1.25rem auto 2rem; text-wrap: pretty;
   }
   .heroe .acciones { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; }
+  @media (prefers-reduced-motion: no-preference) {
+    .heroe > * { animation: aparecer 500ms cubic-bezier(0.23, 1, 0.32, 1) backwards; }
+    .heroe p.sub { animation-delay: 60ms; }
+    .heroe .acciones { animation-delay: 120ms; }
+    .heroe .ejemplo { animation-delay: 180ms; }
+  }
+  @keyframes aparecer {
+    from { opacity: 0; transform: translateY(8px); }
+  }
   .ejemplo {
     margin: 3rem auto 0; max-width: 640px; text-align: left;
     background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px;
@@ -69,8 +91,13 @@
   .ejemplo .pregunta::before { content: "› "; color: var(--acento); }
   .ejemplo .respuesta { color: var(--tinta-suave); margin-top: .5rem; }
   section { padding: 3rem 0; }
-  section h2 { font-size: 1.5rem; margin-bottom: 1.75rem; text-align: center; }
-  .rejilla { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; }
+  section h2 {
+    font-size: 1.5rem; letter-spacing: -0.02em; margin-bottom: 1.75rem;
+    text-align: center; text-wrap: balance;
+  }
+  .rejilla { display: grid; grid-template-columns: 1fr; gap: 1.25rem; }
+  @media (min-width: 640px) { .rejilla { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 880px) { .precios .rejilla { grid-template-columns: repeat(4, 1fr); } }
   .tarjeta {
     background: var(--tarjeta); border: 1px solid var(--borde);
     border-radius: 12px; padding: 1.5rem;
@@ -125,7 +152,7 @@
       <div class="ejemplo">
         <p class="pregunta">¿Qué ayuntamientos adjudicaron más contratos de obras el año pasado y por qué importe?</p>
         <p class="respuesta">El agente traduce tu pregunta a consultas sobre los datos reales
-        y contesta con cifras verificables — incluyendo señales estadísticas de
+        y contesta con cifras verificables, incluyendo señales estadísticas de
         anomalías cuando las hay.</p>
       </div>
     </section>
@@ -164,7 +191,7 @@
           <h3>Gratis</h3>
           <p class="precio">0 €<small>/mes</small></p>
           <p class="cuota">10 preguntas al mes</p>
-          <a class="boton secundario" href="/app">Empezar</a>
+          <a class="boton secundario" href="/app">Crear cuenta gratis</a>
         </div>
         <div class="tarjeta">
           <h3>Básico</h3>
