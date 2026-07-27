@@ -3,39 +3,56 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Suscripción completada — Radar de Contratación Pública</title>
+<title>Suscripción completada · Radar de Contratación Pública</title>
 <style>
-  :root { --fondo:#ffffff; --tinta:#1a2233; --tinta-suave:#5a6478; --acento:#0d5c63; --acento-tinta:#ffffff; --borde:#e3e7ee; --tarjeta:#f7f9fb; --acento-hover:#0a4a50; --exito:#1e7d43; }
+  @font-face {
+    font-family: "Archivo";
+    src: url("/static/fonts/archivo-vf.woff2") format("woff2-variations");
+    font-weight: 100 900;
+    font-display: swap;
+  }
+  :root {
+    --papel:#f4f5f4; --tinta:#16181a; --tinta-suave:#575d61; --regla:#d8dbd9;
+    --acento:#2647c1; --acento-hover:#1c37a0; --exito:#1e7d43;
+    --sans:"Archivo", system-ui, sans-serif;
+  }
   @media (prefers-color-scheme: dark) {
-    :root { --fondo:#10141c; --tinta:#e8ecf3; --tinta-suave:#9aa4b5; --acento:#35a7b1; --acento-tinta:#0b1016; --borde:#26303f; --tarjeta:#171d28; --acento-hover:#4bb8c1; --exito:#5fc98a; }
+    :root {
+      --papel:#121415; --tinta:#e8eae9; --tinta-suave:#9aa1a5; --regla:#272b2d;
+      --acento:#93a7ff; --acento-hover:#b0bfff; --exito:#5fc98a;
+    }
   }
   * { margin:0; padding:0; box-sizing:border-box; }
   body {
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    background: var(--fondo); color: var(--tinta); line-height: 1.6;
-    min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 1.25rem;
+    font-family: var(--sans);
+    background: var(--papel); color: var(--tinta); line-height: 1.6;
+    min-height: 100vh; min-height: 100dvh; display: grid; place-items: center;
+    padding: 1.5rem;
   }
-  .tarjeta {
-    background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px;
-    padding: 2.5rem; max-width: 480px; text-align: center;
+  .aviso {
+    max-width: 460px; padding: 2.25rem 0;
+    border-top: 1px solid var(--regla); border-bottom: 1px solid var(--regla);
   }
   .icono { color: var(--exito); }
-  h1 { font-size: 1.4rem; letter-spacing: -0.02em; margin: .75rem 0 .5rem; }
-  p { color: var(--tinta-suave); margin-bottom: 1.5rem; text-wrap: pretty; }
+  h1 { font-size: 1.45rem; font-weight: 640; letter-spacing: -0.02em; margin: .9rem 0 .5rem; }
+  p { color: var(--tinta-suave); margin-bottom: 1.6rem; text-wrap: pretty; }
   .boton {
-    display: inline-block; background: var(--acento); color: var(--acento-tinta);
-    padding: .6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600;
-    transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1), background-color 160ms ease;
+    display: inline-block; background: var(--tinta); color: var(--papel);
+    padding: .6rem 1.2rem; border-radius: 6px; text-decoration: none; font-weight: 560;
+    transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1), background-color 160ms ease, color 160ms ease;
   }
   .boton:active { transform: scale(0.97); }
-  @media (hover: hover) and (pointer: fine) { .boton:hover { background: var(--acento-hover); } }
+  @media (hover: hover) and (pointer: fine) { .boton:hover { background: var(--acento-hover); color: #fff; } }
+  @media (prefers-color-scheme: dark) {
+    @media (hover: hover) and (pointer: fine) { .boton:hover { color: #101315; } }
+  }
   .boton:focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }
 </style>
 </head>
 <body>
-  <div class="tarjeta">
+  <div class="aviso">
     <!-- Icono: Tabler Icons, circle-check (MIT) -->
-    <svg class="icono" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <svg class="icono" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <path d="M12 3a9 9 0 1 1 0 18a9 9 0 0 1 0 -18z" />
       <path d="M9 12l2 2l4 -4" />
     </svg>

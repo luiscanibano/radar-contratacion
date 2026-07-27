@@ -1,0 +1,211 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-27T00:00:00+02:00",
+  "title": "Design System: Radar de Contratación Pública",
+  "extensions": {
+    "colorMeta": {
+      "papel": {
+        "role": "neutral",
+        "displayName": "Papel frío",
+        "canonical": "#f4f5f4",
+        "darkValue": "#121415",
+        "tonalRamp": ["oklch(15% 0.004 200)", "oklch(26% 0.004 200)", "oklch(38% 0.004 200)", "oklch(50% 0.004 200)", "oklch(62% 0.004 200)", "oklch(74% 0.004 200)", "oklch(86% 0.004 200)", "oklch(96% 0.004 200)"]
+      },
+      "tinta": {
+        "role": "neutral",
+        "displayName": "Tinta",
+        "canonical": "#16181a",
+        "darkValue": "#e8eae9",
+        "tonalRamp": ["oklch(15% 0.006 230)", "oklch(26% 0.006 230)", "oklch(38% 0.006 230)", "oklch(50% 0.006 230)", "oklch(62% 0.006 230)", "oklch(74% 0.006 230)", "oklch(86% 0.006 230)", "oklch(95% 0.006 230)"]
+      },
+      "tinta-suave": {
+        "role": "neutral",
+        "displayName": "Tinta suave",
+        "canonical": "#575d61",
+        "darkValue": "#9aa1a5",
+        "tonalRamp": ["oklch(15% 0.01 225)", "oklch(26% 0.01 225)", "oklch(38% 0.01 225)", "oklch(50% 0.01 225)", "oklch(62% 0.01 225)", "oklch(74% 0.01 225)", "oklch(86% 0.01 225)", "oklch(95% 0.01 225)"]
+      },
+      "regla": {
+        "role": "neutral",
+        "displayName": "Regla",
+        "canonical": "#d8dbd9",
+        "darkValue": "#272b2d",
+        "tonalRamp": ["oklch(15% 0.003 170)", "oklch(26% 0.003 170)", "oklch(38% 0.003 170)", "oklch(50% 0.003 170)", "oklch(62% 0.003 170)", "oklch(74% 0.003 170)", "oklch(86% 0.003 170)", "oklch(95% 0.003 170)"]
+      },
+      "acento": {
+        "role": "primary",
+        "displayName": "Cobalto",
+        "canonical": "#2647c1",
+        "darkValue": "#93a7ff",
+        "tonalRamp": ["oklch(15% 0.09 268)", "oklch(26% 0.13 268)", "oklch(38% 0.17 268)", "oklch(50% 0.19 268)", "oklch(62% 0.16 268)", "oklch(74% 0.12 268)", "oklch(86% 0.07 268)", "oklch(95% 0.03 268)"]
+      },
+      "acento-hover": {
+        "role": "primary",
+        "displayName": "Cobalto hundido",
+        "canonical": "#1c37a0",
+        "darkValue": "#b0bfff",
+        "tonalRamp": ["oklch(15% 0.09 268)", "oklch(24% 0.13 268)", "oklch(34% 0.17 268)", "oklch(44% 0.18 268)", "oklch(56% 0.15 268)", "oklch(70% 0.12 268)", "oklch(84% 0.08 268)", "oklch(94% 0.03 268)"]
+      },
+      "consola": {
+        "role": "neutral",
+        "displayName": "Consola",
+        "canonical": "#101315",
+        "darkValue": "#0b0e10",
+        "tonalRamp": ["oklch(12% 0.007 220)", "oklch(20% 0.007 220)", "oklch(30% 0.007 220)", "oklch(42% 0.007 220)", "oklch(55% 0.007 220)", "oklch(70% 0.007 220)", "oklch(84% 0.007 220)", "oklch(95% 0.007 220)"]
+      },
+      "consola-tinta": {
+        "role": "neutral",
+        "displayName": "Tinta de consola",
+        "canonical": "#e9ebea",
+        "darkValue": "#e9ebea",
+        "tonalRamp": ["oklch(15% 0.003 180)", "oklch(26% 0.003 180)", "oklch(38% 0.003 180)", "oklch(50% 0.003 180)", "oklch(62% 0.003 180)", "oklch(74% 0.003 180)", "oklch(86% 0.003 180)", "oklch(95% 0.003 180)"]
+      },
+      "consola-suave": {
+        "role": "neutral",
+        "displayName": "Consola suave",
+        "canonical": "#969ea3",
+        "darkValue": "#969ea3",
+        "tonalRamp": ["oklch(15% 0.01 225)", "oklch(26% 0.01 225)", "oklch(38% 0.01 225)", "oklch(50% 0.01 225)", "oklch(62% 0.01 225)", "oklch(74% 0.01 225)", "oklch(86% 0.01 225)", "oklch(95% 0.01 225)"]
+      },
+      "consola-regla": {
+        "role": "neutral",
+        "displayName": "Regla de consola",
+        "canonical": "#272c2f",
+        "darkValue": "#23282b",
+        "tonalRamp": ["oklch(15% 0.008 215)", "oklch(24% 0.008 215)", "oklch(35% 0.008 215)", "oklch(47% 0.008 215)", "oklch(60% 0.008 215)", "oklch(73% 0.008 215)", "oklch(85% 0.008 215)", "oklch(95% 0.008 215)"]
+      },
+      "consola-ambar": {
+        "role": "secondary",
+        "displayName": "Ámbar de señal",
+        "canonical": "#f0b429",
+        "darkValue": "#f0b429",
+        "tonalRamp": ["oklch(18% 0.05 85)", "oklch(30% 0.08 85)", "oklch(42% 0.11 85)", "oklch(54% 0.13 85)", "oklch(66% 0.15 85)", "oklch(78% 0.16 85)", "oklch(88% 0.13 85)", "oklch(95% 0.07 85)"]
+      },
+      "error": {
+        "role": "error",
+        "displayName": "Error",
+        "canonical": "#a83a31",
+        "darkValue": "#e08078",
+        "tonalRamp": ["oklch(16% 0.06 28)", "oklch(27% 0.09 28)", "oklch(38% 0.12 28)", "oklch(49% 0.14 28)", "oklch(61% 0.13 28)", "oklch(73% 0.10 28)", "oklch(85% 0.07 28)", "oklch(94% 0.03 28)"]
+      },
+      "exito": {
+        "role": "success",
+        "displayName": "Éxito",
+        "canonical": "#1e7d43",
+        "darkValue": "#5fc98a",
+        "tonalRamp": ["oklch(16% 0.05 152)", "oklch(27% 0.08 152)", "oklch(38% 0.10 152)", "oklch(50% 0.12 152)", "oklch(62% 0.13 152)", "oklch(74% 0.12 152)", "oklch(86% 0.09 152)", "oklch(95% 0.04 152)"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "El h1 del héroe, uno por página; text-wrap: balance." },
+      "titulo": { "displayName": "Título", "purpose": "Titulares de fila del registro y h1 de los avisos de billing." },
+      "rotulo-seccion": { "displayName": "Rótulo de sección", "purpose": "Los h2: discretos, en tinta suave; nombran la sección sin gritar." },
+      "cuerpo": { "displayName": "Cuerpo", "purpose": "Texto corriente; el secundario en tinta suave con text-wrap: pretty." },
+      "dato": { "displayName": "Dato", "purpose": "Todo lo verificable: consultas, cifras, precios, código, metadatos. Tablas con tabular-nums." }
+    },
+    "shadows": [
+      { "name": "sombra-panel", "value": "0 16px 40px rgb(9 11 12 / .22)", "purpose": "Única sombra del sistema: el panel de tinta cuando flota como protagonista (variante .18 en el bloque MCP). Nunca en controles." }
+    ],
+    "motion": [
+      { "name": "curva-salida", "value": "cubic-bezier(0.23, 1, 0.32, 1)", "purpose": "Curva única para transform y opacidad (botones 160ms, revelado 400ms)." },
+      { "name": "duracion-control", "value": "160ms", "purpose": "Transform y color de botones; 150ms en enlaces y bordes de inputs." },
+      { "name": "duracion-revelado", "value": "400ms", "purpose": "Opacidad de cada paso del revelado de la consola del héroe." },
+      { "name": "escalon-revelado", "value": "90ms", "purpose": "Retardo entre pasos del revelado (arranque a 260ms tras el tecleo)." },
+      { "name": "tecleo", "value": "26ms/carácter (inicio a 350ms)", "purpose": "La consulta del héroe tecleándose una única vez." },
+      { "name": "parpadeo-cursor", "value": "1.1s steps(1) infinite", "purpose": "Cursor de bloque durante el tecleo; oculto al terminar." }
+    ],
+    "breakpoints": [
+      { "name": "tablet", "value": "900px" },
+      { "name": "nav-compacta", "value": "620px" },
+      { "name": "movil", "value": "560px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Botón primario",
+      "kind": "button",
+      "refersTo": "boton-primario",
+      "description": "Acción principal: tinta sobre papel; en hover pasa a cobalto hundido, en active se encoge al 97%.",
+      "html": "<button class=\"ds-boton-primario\">Crear cuenta gratis</button>",
+      "css": ".ds-boton-primario { display: inline-block; background: #16181a; color: #f4f5f4; padding: .65rem 1.25rem; border-radius: 6px; font-family: 'Archivo', system-ui, sans-serif; font-weight: 560; font-size: .95rem; border: none; cursor: pointer; transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1), background-color 160ms ease, color 160ms ease; } .ds-boton-primario:hover { background: #1c37a0; color: #fff; } .ds-boton-primario:active { transform: scale(0.97); } .ds-boton-primario:focus-visible { outline: 2px solid #2647c1; outline-offset: 2px; }"
+    },
+    {
+      "name": "Botón secundario",
+      "kind": "button",
+      "refersTo": "boton-secundario",
+      "description": "Acción alternativa: transparente con borde de regla; el hover solo endurece el borde.",
+      "html": "<button class=\"ds-boton-secundario\">Ver precios</button>",
+      "css": ".ds-boton-secundario { display: inline-block; background: transparent; color: #16181a; padding: .65rem 1.25rem; border-radius: 6px; font-family: 'Archivo', system-ui, sans-serif; font-weight: 560; font-size: .95rem; border: 1px solid #d8dbd9; cursor: pointer; transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1), border-color 160ms ease; } .ds-boton-secundario:hover { border-color: #575d61; } .ds-boton-secundario:active { transform: scale(0.97); } .ds-boton-secundario:focus-visible { outline: 2px solid #2647c1; outline-offset: 2px; }"
+    },
+    {
+      "name": "Campo de texto",
+      "kind": "input",
+      "refersTo": "campo",
+      "description": "Campo sobre papel con borde de regla; el foco lo marca el anillo cobalto con offset -1px.",
+      "html": "<div class=\"ds-campo\"><label for=\"ds-email\">Email</label><input type=\"email\" id=\"ds-email\" placeholder=\"analista@ejemplo.es\"></div>",
+      "css": ".ds-campo label { display: block; font-family: 'Archivo', system-ui, sans-serif; font-size: .85rem; margin-bottom: .3rem; color: #575d61; } .ds-campo input { width: 100%; padding: .6rem .75rem; border: 1px solid #d8dbd9; border-radius: 6px; background: #f4f5f4; color: #16181a; font: inherit; font-family: 'Archivo', system-ui, sans-serif; transition: border-color 150ms ease; } .ds-campo input:focus-visible { outline: 2px solid #2647c1; outline-offset: -1px; border-color: #2647c1; }"
+    },
+    {
+      "name": "Panel de tinta",
+      "kind": "custom",
+      "refersTo": "panel-tinta",
+      "description": "Componente firma: la consola donde vive el dato — membrete, consulta con prefijo ›, tabla de cifras tabulares y señal en ámbar.",
+      "html": "<div class=\"ds-consola\"><div class=\"ds-consola-membrete\"><span>consulta de ejemplo</span><span>datos ilustrativos</span></div><p class=\"ds-consola-pregunta\">¿Qué ayuntamientos adjudicaron más obras en 2024?</p><table class=\"ds-consola-tabla\"><tbody><tr><td>Ayto. de Madrid</td><td>214 contratos</td><td>312,4 M€</td></tr><tr><td>Ayto. de Barcelona</td><td>187 contratos</td><td>248,9 M€</td></tr></tbody></table><p class=\"ds-consola-senal\">señal: baja atípica en 2 de estas adjudicaciones (ejemplo)</p></div>",
+      "css": ".ds-consola { background: #101315; color: #e9ebea; border: 1px solid #272c2f; border-radius: 10px; padding: 1.4rem 1.5rem 1.5rem; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: .84rem; line-height: 1.75; box-shadow: 0 16px 40px rgb(9 11 12 / .22); } .ds-consola-membrete { display: flex; justify-content: space-between; gap: 1rem; color: #969ea3; font-size: .72rem; padding-bottom: .8rem; margin-bottom: 1rem; border-bottom: 1px solid #272c2f; } .ds-consola-pregunta { font-weight: 560; margin: 0 0 .75rem; } .ds-consola-pregunta::before { content: '› '; color: #969ea3; } .ds-consola-tabla { border-collapse: collapse; width: 100%; } .ds-consola-tabla td { padding: .28rem 0; font-variant-numeric: tabular-nums; border-top: 1px solid #272c2f; } .ds-consola-tabla td + td { text-align: right; white-space: nowrap; } .ds-consola-tabla td:first-child { padding-right: 1rem; } .ds-consola-senal { color: #f0b429; font-size: .78rem; margin: 1rem 0 0; } .ds-consola-senal::before { content: '■ '; }"
+    },
+    {
+      "name": "Fila de registro",
+      "kind": "custom",
+      "refersTo": "",
+      "description": "La unidad estructural del papel: término mono en cobalto, titular 620 y prosa suave, entre hairlines.",
+      "html": "<div class=\"ds-fila\"><span class=\"ds-fila-termino\">vigilar</span><div><h3 class=\"ds-fila-titulo\">Alertas cuando se publica lo tuyo</h3><p class=\"ds-fila-prosa\">Guarda una búsqueda y recibe un email cuando entren licitaciones nuevas que encajen.</p></div></div>",
+      "css": ".ds-fila { display: grid; grid-template-columns: 9rem minmax(0, 1fr); gap: 2rem; padding: 1.9rem 0; border-top: 1px solid #d8dbd9; border-bottom: 1px solid #d8dbd9; font-family: 'Archivo', system-ui, sans-serif; } .ds-fila-termino { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: .8rem; color: #2647c1; padding-top: .45rem; } .ds-fila-titulo { font-size: 1.45rem; font-weight: 620; letter-spacing: -0.02em; line-height: 1.25; margin: 0 0 .4rem; color: #16181a; } .ds-fila-prosa { color: #575d61; font-size: .98rem; margin: 0; line-height: 1.6; }"
+    },
+    {
+      "name": "Mensaje de estado",
+      "kind": "custom",
+      "refersTo": "",
+      "description": "Error o éxito como texto plano bajo el formulario; sin fondos, sin toasts. Solo en superficies Operate.",
+      "html": "<p class=\"ds-mensaje-error\">Has agotado la cuota mensual de tu plan. Amplíala en la sección de abajo.</p><p class=\"ds-mensaje-exito\">Alerta creada. Te avisaremos por email.</p>",
+      "css": ".ds-mensaje-error, .ds-mensaje-exito { font-family: 'Archivo', system-ui, sans-serif; font-size: .95rem; margin: .75rem 0 0; } .ds-mensaje-error { color: #a83a31; } .ds-mensaje-exito { color: #1e7d43; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "La consola del analista",
+    "overview": "Papel frío y tinta: la interfaz es un documento de trabajo, no un folleto SaaS. El mundo tiene dos materiales y solo dos. El papel es la superficie de lectura: sobre él viven el texto, las reglas finas y los controles. El panel de tinta es la superficie del dato: una consola oscura donde las cifras, las consultas y las respuestas del agente se presentan en monoespaciada. Todo lo demás —tarjetas flotantes, degradados, ilustraciones, hero centrado con tres columnas de features— queda fuera del mundo.\n\nEl tono es sobrio y verificable, para una audiencia que lee BOE y PLACSP en pantalla de oficina. La landing se comporta como el producto: el primer viewport es una consulta resolviéndose, no un muro de claims. La densidad es la de un libro de registro: filas separadas por reglas finas, columnas alineadas, cifras tabulares.",
+    "keyCharacteristics": [
+      "Dos materiales: papel de lectura y panel de tinta para el dato.",
+      "Reglas finas de 1px (--regla) en lugar de tarjetas.",
+      "Un único acento (cobalto); el ámbar es exclusivamente semántico.",
+      "Bimodal claro/oscuro vía prefers-color-scheme; el panel de tinta es idéntico en ambos temas.",
+      "Un solo momento de motion con autor por superficie.",
+      "HTML autocontenido, fuentes autohospedadas, sin framework ni build."
+    ],
+    "rules": [
+      { "name": "La Regla del Único Acento", "body": "El cobalto es el único color de acento del sistema. Si una superficie nueva necesita \"otro color\", la respuesta es tinta, tinta suave o nada.", "section": "colors" },
+      { "name": "La Regla del Ámbar Semántico", "body": "El ámbar significa \"señal estadística a revisar\" y nada más. Aparece solo dentro del panel de tinta, precedido del marcador ■. Usarlo como decoración rompe el contrato legal del producto.", "section": "colors" },
+      { "name": "La Regla del Panel Invariante", "body": "El panel de tinta es idéntico en tema claro y oscuro: --consola-tinta, --consola-suave y --consola-ambar no se redefinen en dark. El dato se lee igual a cualquier hora.", "section": "colors" },
+      { "name": "La Regla del Dato Mono", "body": "Toda cifra de negocio, consulta, precio, identificador o metadato técnico se compone en JetBrains Mono; los importes y tablas siempre con font-variant-numeric: tabular-nums. Si es verificable, es mono.", "section": "typography" },
+      { "name": "La Regla de los Pesos Intermedios", "body": "Archivo es variable: los pesos del sistema son 560 (controles y rótulos), 620 (títulos), 640 (display) y 680 (marca), con trackings negativos crecientes con el tamaño. No usar 400/700 genéricos para jerarquía de display.", "section": "typography" },
+      { "name": "La Regla de la Sombra Única", "body": "Solo el panel de tinta proyecta sombra, y solo cuando flota como pieza protagonista (héroe, bloque de código). La respuesta del agente dentro del panel de la app no la lleva: allí el panel está encastrado en el flujo, no flotando.", "section": "elevation" },
+      { "name": "La Regla de la Curva Única", "body": "Toda animación con desplazamiento u opacidad usa cubic-bezier(0.23, 1, 0.32, 1); los cambios de color usan ease. No se introducen curvas nuevas.", "section": "components" },
+      { "name": "La Regla del Respeto al Movimiento", "body": "Todo hover vive tras @media (hover: hover) and (pointer: fine); toda animación, tras prefers-reduced-motion: no-preference (o un early-return en JS). El estado final siempre es legible sin animación.", "section": "components" }
+    ],
+    "dos": [
+      "Do separar contenido con hairlines de 1px --regla; la estructura del mundo es un libro de registro.",
+      "Do poner todo dato verificable (cifras, consultas, precios, código) en JetBrains Mono, y las tablas de cifras con tabular-nums alineadas a la derecha.",
+      "Do definir ambos temas por prefers-color-scheme en cada superficie nueva, manteniendo el panel de tinta idéntico en los dos.",
+      "Do dar a todo elemento interactivo :focus-visible con outline: 2px solid var(--acento) y offset 2px (−1px en campos).",
+      "Do etiquetar los datos de ejemplo como \"datos ilustrativos\" cuando no salgan del corpus real.",
+      "Do mantener cada página autocontenida: CSS y JS inline, fuentes desde /static/fonts/, cero dependencias externas."
+    ],
+    "donts": [
+      "Don't crear tarjetas con fondo y sombra sobre el papel; el único recipiente con fondo propio es el panel de tinta.",
+      "Don't usar el ámbar fuera de una señal estadística, ni el error/éxito fuera de mensajes de estado en superficies Operate.",
+      "Don't introducir un segundo color de acento, degradados o rellenos decorativos; el cobalto trabaja solo.",
+      "Don't añadir animaciones ambientales, parallax o transiciones de entrada por sección: cada superficie tiene como mucho un momento de motion con autor.",
+      "Don't enlazar fuentes ni scripts de terceros (Google Fonts, CDNs); rompe el compromiso de autocontención.",
+      "Don't usar radios distintos de 6px (controles) y 10px (paneles), ni bordes de más de 1px."
+    ]
+  }
+}

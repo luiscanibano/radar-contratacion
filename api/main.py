@@ -7,6 +7,7 @@ from pathlib import Path
 
 from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException, Request, status
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from api.agent.graph import responder
@@ -45,6 +46,9 @@ app.mount("/mcp", BearerAuthASGIMiddleware(_mcp_app))
 # por la propia API. Fuera del esquema OpenAPI para que /docs siga siendo
 # solo la referencia de la API.
 _STATIC = Path(__file__).parent / "static"
+
+# Fuentes autohospedadas (y otros assets) de la interfaz web.
+app.mount("/static/fonts", StaticFiles(directory=_STATIC / "fonts"), name="fonts")
 
 
 @app.get("/", include_in_schema=False)

@@ -3,56 +3,72 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Panel — Radar de Contratación Pública</title>
+<title>Panel · Radar de Contratación Pública</title>
 <style>
+  @font-face {
+    font-family: "Archivo";
+    src: url("/static/fonts/archivo-vf.woff2") format("woff2-variations");
+    font-weight: 100 900;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "JetBrains Mono";
+    src: url("/static/fonts/jetbrains-mono-vf.woff2") format("woff2-variations");
+    font-weight: 100 800;
+    font-display: swap;
+  }
   :root {
-    --fondo: #ffffff;
-    --tinta: #1a2233;
-    --tinta-suave: #5a6478;
-    --acento: #0d5c63;
-    --acento-tinta: #ffffff;
-    --borde: #e3e7ee;
-    --tarjeta: #f7f9fb;
-    --error: #b3372f;
+    --papel: #f4f5f4;
+    --tinta: #16181a;
+    --tinta-suave: #575d61;
+    --regla: #d8dbd9;
+    --acento: #2647c1;
+    --acento-hover: #1c37a0;
+    --consola: #101315;
+    --consola-tinta: #e9ebea;
+    --consola-regla: #272c2f;
+    --error: #a83a31;
     --exito: #1e7d43;
-    --acento-hover: #0a4a50;
+    --sans: "Archivo", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", monospace;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --fondo: #10141c;
-      --tinta: #e8ecf3;
-      --tinta-suave: #9aa4b5;
-      --acento: #35a7b1;
-      --acento-tinta: #0b1016;
-      --borde: #26303f;
-      --tarjeta: #171d28;
-      --error: #e07a72;
+      --papel: #121415;
+      --tinta: #e8eae9;
+      --tinta-suave: #9aa1a5;
+      --regla: #272b2d;
+      --acento: #93a7ff;
+      --acento-hover: #b0bfff;
+      --consola: #0b0e10;
+      --consola-regla: #23282b;
+      --error: #e08078;
       --exito: #5fc98a;
-      --acento-hover: #4bb8c1;
     }
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    background: var(--fondo); color: var(--tinta); line-height: 1.6;
+    font-family: var(--sans);
+    background: var(--papel); color: var(--tinta); line-height: 1.6;
   }
-  .contenedor { max-width: 760px; margin: 0 auto; padding: 0 1.25rem 3rem; }
+  .contenedor { max-width: 720px; margin: 0 auto; padding: 0 1.5rem 3.5rem; }
   header.cabecera {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 1.25rem 0; margin-bottom: 1.5rem;
+    padding: 1.1rem 0; margin-bottom: 2rem; border-bottom: 1px solid var(--regla);
   }
-  .marca { font-weight: 700; text-decoration: none; color: var(--tinta); }
-  .marca span { color: var(--acento); }
-  .sesion { display: flex; gap: .75rem; align-items: center; font-size: .9rem; color: var(--tinta-suave); }
-  .tarjeta {
-    background: var(--tarjeta); border: 1px solid var(--borde);
-    border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;
+  .marca {
+    font-weight: 680; font-size: 1rem; letter-spacing: -0.01em;
+    text-decoration: none; color: var(--tinta);
   }
-  h2 { font-size: 1.25rem; letter-spacing: -0.01em; margin-bottom: 1rem; }
-  label { display: block; font-size: .9rem; margin-bottom: .25rem; color: var(--tinta-suave); }
+  .sesion { display: flex; gap: .75rem; align-items: center; font-size: .85rem; color: var(--tinta-suave); }
+  #sesion-email { font-family: var(--mono); font-size: .75rem; }
+  .tarjeta { padding: 0 0 2.5rem; margin-bottom: 2.5rem; border-bottom: 1px solid var(--regla); }
+  .tarjeta:last-child { border-bottom: none; }
+  h2 { font-size: 1.05rem; font-weight: 560; color: var(--tinta-suave); margin-bottom: 1.1rem; }
+  label { display: block; font-size: .85rem; margin-bottom: .3rem; color: var(--tinta-suave); }
   input[type="email"], input[type="password"], input[type="text"], textarea {
-    width: 100%; padding: .6rem .75rem; border: 1px solid var(--borde);
-    border-radius: 8px; background: var(--fondo); color: var(--tinta);
+    width: 100%; padding: .6rem .75rem; border: 1px solid var(--regla);
+    border-radius: 6px; background: var(--papel); color: var(--tinta);
     font: inherit; margin-bottom: .9rem; transition: border-color 150ms ease;
   }
   input:focus-visible, textarea:focus-visible {
@@ -60,48 +76,62 @@
   }
   textarea { resize: vertical; min-height: 5.5rem; }
   .boton {
-    display: inline-block; background: var(--acento); color: var(--acento-tinta);
-    padding: .55rem 1.1rem; border-radius: 8px; font-weight: 600;
+    display: inline-block; background: var(--tinta); color: var(--papel);
+    padding: .55rem 1.1rem; border-radius: 6px; font-weight: 560;
     font-size: .95rem; border: none; cursor: pointer; text-decoration: none;
     transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1),
-                background-color 160ms ease, border-color 160ms ease;
+                background-color 160ms ease, border-color 160ms ease,
+                color 160ms ease;
   }
   .boton:active:not(:disabled) { transform: scale(0.97); }
   .boton:disabled { opacity: .55; cursor: wait; }
-  .boton.secundario { background: transparent; color: var(--tinta); border: 1px solid var(--borde); }
+  .boton.secundario { background: transparent; color: var(--tinta); border: 1px solid var(--regla); }
   .boton.pequeno { padding: .3rem .7rem; font-size: .85rem; }
   @media (hover: hover) and (pointer: fine) {
-    .boton:hover:not(:disabled) { background: var(--acento-hover); }
-    .boton.secundario:hover:not(:disabled) { background: transparent; border-color: var(--tinta-suave); }
+    .boton:hover:not(:disabled) { background: var(--acento-hover); color: #fff; }
+    .boton.secundario:hover:not(:disabled) { background: transparent; color: var(--tinta); border-color: var(--tinta-suave); }
+  }
+  @media (prefers-color-scheme: dark) {
+    @media (hover: hover) and (pointer: fine) {
+      .boton:hover:not(:disabled) { color: var(--consola); }
+    }
   }
   :is(a, button):focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }
-  .alterna { margin-top: .75rem; font-size: .9rem; color: var(--tinta-suave); }
+  .alterna { margin-top: .75rem; font-size: .95rem; color: var(--tinta-suave); }
   .enlace {
     background: none; border: none; padding: 0; font: inherit;
     color: var(--acento); cursor: pointer; text-decoration: underline;
   }
-  .mensaje { font-size: .9rem; margin-top: .75rem; }
+  .mensaje { font-size: .95rem; margin-top: .75rem; }
   .mensaje.error { color: var(--error); }
   .mensaje.exito { color: var(--exito); }
   .respuesta {
-    white-space: pre-wrap; background: var(--fondo); border: 1px solid var(--borde);
-    border-radius: 8px; padding: 1rem; margin-top: 1rem; font-size: .95rem;
+    white-space: pre-wrap; background: var(--consola); color: var(--consola-tinta);
+    border: 1px solid var(--consola-regla);
+    border-radius: 10px; padding: 1.1rem 1.25rem; margin-top: 1rem;
+    font-family: var(--mono); font-size: .84rem; line-height: 1.7;
   }
   ul.alertas { list-style: none; }
   ul.alertas li {
     display: flex; justify-content: space-between; align-items: center;
-    gap: 1rem; padding: .6rem 0; border-bottom: 1px solid var(--borde);
+    gap: 1rem; padding: .65rem 0; border-bottom: 1px solid var(--regla);
     font-size: .95rem;
   }
+  ul.alertas li span { font-family: var(--mono); font-size: .8rem; }
   ul.alertas li:last-child { border-bottom: none; }
   ul.alertas li.vacia { color: var(--tinta-suave); justify-content: flex-start; }
-  .planes { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .75rem; }
-  .planes .plan {
-    border: 1px solid var(--borde); border-radius: 8px; padding: 1rem;
-    text-align: center; background: var(--fondo);
+  .planes { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--regla); }
+  .planes .plan { padding: 1.1rem 1rem 1.25rem; border-bottom: 1px solid var(--regla); }
+  .planes .plan + .plan { border-left: 1px solid var(--regla); }
+  .planes .plan strong { display: block; font-weight: 620; letter-spacing: -0.01em; }
+  .planes .plan small {
+    color: var(--tinta-suave); display: block; margin: .2rem 0 .8rem;
+    font-family: var(--mono); font-size: .75rem;
   }
-  .planes .plan strong { display: block; }
-  .planes .plan small { color: var(--tinta-suave); display: block; margin-bottom: .6rem; }
+  @media (max-width: 560px) {
+    .planes { grid-template-columns: 1fr; }
+    .planes .plan + .plan { border-left: none; }
+  }
   .oculto { display: none; }
 </style>
 </head>
@@ -109,12 +139,18 @@
 
 <div class="contenedor">
   <header class="cabecera">
-    <a class="marca" href="/">Radar de <span>Contratación Pública</span></a>
+    <a class="marca" href="/">Radar de Contratación Pública</a>
     <div class="sesion oculto" id="sesion">
       <span id="sesion-email"></span>
       <button class="boton secundario pequeno" id="btn-salir">Salir</button>
     </div>
   </header>
+
+  <noscript>
+    <p style="color: var(--tinta-suave); padding-bottom: 2rem;">El panel
+    necesita JavaScript para iniciar sesión y preguntar al agente.
+    Actívalo y recarga la página.</p>
+  </noscript>
 
   <!-- ===== Autenticación ===== -->
   <section id="vista-auth" class="tarjeta oculto">
@@ -399,6 +435,10 @@
   });
 
   // --- arranque -------------------------------------------------------------
+
+  // La landing enlaza "Crear cuenta gratis" a /app#registro: sin sesión,
+  // arranca directamente en modo registro en vez de en login.
+  if (!token() && location.hash === "#registro") $("auth-cambiar").click();
 
   if (token()) mostrarPanel(); else mostrarAuth();
 })();
