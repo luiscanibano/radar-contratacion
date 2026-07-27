@@ -177,8 +177,8 @@ de producción, distinto del de `stripe listen` en local.
 5. ✅ Agente conversacional (text-to-SQL + RAG)
 6. ✅ Evals + observabilidad
 7. ✅ Producto (auth, Stripe, alertas) + despliegue en VPS — en producción en
-   [radarcontratacion.com](https://radarcontratacion.com); Stripe/Resend con
-   el código listo, pendientes de claves reales
+   [radarcontratacion.com](https://radarcontratacion.com), con Stripe (live) y
+   Resend (dominio verificado) configurados
 8. Servidor MCP + pulido + lanzamiento
 
 ## Aviso legal
