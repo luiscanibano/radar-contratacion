@@ -28,11 +28,34 @@ from __future__ import annotations
 from typing import Any
 
 from mcp.server.fastmcp import FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 
 from api.agent.tools import buscar_licitaciones as _buscar_hibrida
 from api.agent.tools import run_readonly_sql
 
-mcp = FastMCP("radar-contratacion")
+mcp = FastMCP(
+    "radar-contratacion",
+    # Ruta "/" en vez del default "/mcp": ya se monta bajo el prefijo /mcp en
+    # api/main.py, así que la ruta interna del sub-app tiene que vivir en su
+    # propia raíz — si no, el endpoint real quedaría en /mcp/mcp.
+    streamable_http_path="/",
+    # Sin esto, el default de FastMCP (protección DNS-rebinding pensada para
+    # cuando se sirve solo en localhost) solo admite Host: 127.0.0.1/localhost
+    # y cualquier petición real en producción (Host: radarcontratacion.com)
+    # se rechaza con 421 Misdirected Request. Dominio hardcodeado siguiendo el
+    # mismo patrón que `alert_from_email` en api/settings.py (despliegue de un
+    # solo dominio, no hace falta una settings nueva para esto).
+    transport_security=TransportSecuritySettings(
+        allowed_hosts=[
+            "radarcontratacion.com",
+            "radarcontratacion.com:*",
+            "localhost:*",
+            "127.0.0.1:*",
+            "testserver",  # host que usa TestClient en los tests
+        ],
+        allowed_origins=["https://radarcontratacion.com"],
+    ),
+)
 
 
 @mcp.tool()
