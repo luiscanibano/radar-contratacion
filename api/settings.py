@@ -50,6 +50,7 @@ class Settings(BaseSettings):
     stripe_price_ilimitado: str = ""
     billing_success_url: str = "http://localhost:8000/billing/exito"
     billing_cancel_url: str = "http://localhost:8000/billing/cancelado"
+    billing_portal_return_url: str = "http://localhost:8000/app#cuenta"
 
     # Alertas por email. Sin clave, el job de alertas falla al enviar (no al
     # buscar) y lo registra sin tumbar las demás alertas (ver api/alertas.py).

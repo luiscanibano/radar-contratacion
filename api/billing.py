@@ -55,6 +55,33 @@ def crear_checkout_session(usuario: Usuario, plan_nombre: str) -> str:
     return sesion.url
 
 
+def crear_portal_session(usuario: Usuario) -> str:
+    """Crea una sesión del Billing Portal de Stripe para que el usuario
+    gestione o cancele su suscripción por su cuenta.
+
+    Devuelve la URL a la que redirigir. Lanza ValueError si Stripe no está
+    configurado o el usuario no tiene ninguna suscripción (plan gratuito).
+    """
+    if not settings.stripe_secret_key:
+        raise ValueError("Stripe no está configurado (falta STRIPE_SECRET_KEY)")
+    with connect() as con:
+        with con.cursor() as cur:
+            cur.execute(
+                "select stripe_customer_id from suscripciones where usuario_id = %s",
+                (usuario.id,),
+            )
+            fila = cur.fetchone()
+    if fila is None:
+        raise ValueError("No tienes ninguna suscripción que gestionar")
+    (stripe_customer_id,) = fila
+
+    sesion = stripe.billing_portal.Session.create(
+        customer=stripe_customer_id,
+        return_url=settings.billing_portal_return_url,
+    )
+    return sesion.url
+
+
 def procesar_webhook(payload: bytes, firma: str) -> None:
     """Verifica la firma y aplica el evento. Lanza ValueError si la firma no es válida."""
     if not settings.stripe_webhook_secret:

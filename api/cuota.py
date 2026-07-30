@@ -16,6 +16,18 @@ def _mes_actual() -> str:
     return datetime.now(UTC).strftime("%Y-%m")
 
 
+def uso_actual(usuario_id: int) -> int:
+    """Preguntas ya consumidas este mes (0 si aún no hay fila en uso_mensual)."""
+    with connect() as con:
+        with con.cursor() as cur:
+            cur.execute(
+                "select preguntas from uso_mensual where usuario_id = %s and mes = %s",
+                (usuario_id, _mes_actual()),
+            )
+            fila = cur.fetchone()
+    return fila[0] if fila else 0
+
+
 def consumir_cuota(usuario_id: int) -> bool:
     """Cuenta una pregunta del usuario si le queda cuota este mes.
 

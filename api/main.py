@@ -5,13 +5,13 @@ from __future__ import annotations
 from contextlib import AsyncExitStack, asynccontextmanager
 from pathlib import Path
 
-from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException, Request, status
+from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException, Query, Request, status
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from api.agent.graph import responder
-from api.agent.tools import run_readonly_sql
+from api.agent.tools import buscar_licitaciones, run_readonly_sql
 from api.alertas import borrar_alerta, crear_alerta, listar_alertas
 from api.auth import (
     Usuario,
@@ -20,8 +20,8 @@ from api.auth import (
     registrar_usuario,
     usuario_actual,
 )
-from api.billing import crear_checkout_session, procesar_webhook
-from api.cuota import consumir_cuota
+from api.billing import crear_checkout_session, crear_portal_session, plan_actual, procesar_webhook
+from api.cuota import consumir_cuota, uso_actual
 from api.observabilidad import emitir
 from mcp_server.auth_middleware import BearerAuthASGIMiddleware
 from mcp_server.server import mcp
@@ -42,13 +42,22 @@ async def _lifespan(app: FastAPI):
 app = FastAPI(title="Radar de Contratación Pública", version="0.1.0", lifespan=_lifespan)
 app.mount("/mcp", BearerAuthASGIMiddleware(_mcp_app))
 
-# Interfaz web mínima: HTML estático autocontenido (sin framework JS), servido
-# por la propia API. Fuera del esquema OpenAPI para que /docs siga siendo
-# solo la referencia de la API.
+# Interfaz web: build de producción de web/ (Vite + React), servida por la
+# propia API. Fuera del esquema OpenAPI para que /docs siga siendo solo la
+# referencia de la API.
 _STATIC = Path(__file__).parent / "static"
 
-# Fuentes autohospedadas (y otros assets) de la interfaz web.
-app.mount("/static/fonts", StaticFiles(directory=_STATIC / "fonts"), name="fonts")
+# JS/CSS/fuentes con hash que genera el build de Vite (web/dist/assets). En
+# desarrollo local no existe (se usa el dev server de Vite, no esta API, para
+# servir la interfaz — ver web/vite.config.ts); solo lo monta si ya se ha
+# copiado el build, para que la app arranque igual sin él.
+if (_STATIC / "assets").is_dir():
+    app.mount("/assets", StaticFiles(directory=_STATIC / "assets"), name="assets")
+
+
+@app.get("/favicon.svg", include_in_schema=False)
+def favicon() -> FileResponse:
+    return FileResponse(_STATIC / "favicon.svg")
 
 
 @app.get("/", include_in_schema=False)
@@ -58,19 +67,24 @@ def portada() -> FileResponse:
 
 @app.get("/app", include_in_schema=False)
 def panel() -> FileResponse:
-    return FileResponse(_STATIC / "app.html")
+    return FileResponse(_STATIC / "app" / "index.html")
 
 
 @app.get("/billing/exito", include_in_schema=False)
 def billing_exito() -> FileResponse:
     """Página de retorno de Stripe Checkout (ver billing_success_url en settings)."""
-    return FileResponse(_STATIC / "billing_exito.html")
+    return FileResponse(_STATIC / "billing" / "exito" / "index.html")
 
 
 @app.get("/billing/cancelado", include_in_schema=False)
 def billing_cancelado() -> FileResponse:
     """Página de retorno de Stripe Checkout (ver billing_cancel_url en settings)."""
-    return FileResponse(_STATIC / "billing_cancelado.html")
+    return FileResponse(_STATIC / "billing" / "cancelado" / "index.html")
+
+
+@app.get("/legal", include_in_schema=False)
+def legal() -> FileResponse:
+    return FileResponse(_STATIC / "legal" / "index.html")
 
 
 class Pregunta(BaseModel):
@@ -129,6 +143,32 @@ def me(usuario: Usuario = Depends(usuario_actual)) -> dict[str, str | int]:  # n
     return {"id": usuario.id, "email": usuario.email}
 
 
+@app.get("/me/plan")
+def mi_plan(usuario: Usuario = Depends(usuario_actual)) -> dict:  # noqa: B008
+    """Plan vigente del usuario y su consumo de preguntas este mes."""
+    plan = plan_actual(usuario.id)
+    usadas = uso_actual(usuario.id)
+    restantes = None if plan.cuota is None else max(plan.cuota - usadas, 0)
+    return {"plan": plan.nombre, "cuota": plan.cuota, "usadas": usadas, "restantes": restantes}
+
+
+@app.get("/buscar")
+def buscar(
+    q: str = Query(min_length=1),
+    k: int = Query(default=10, ge=1, le=50),
+    usuario: Usuario = Depends(usuario_actual),  # noqa: B008
+) -> dict:
+    """Búsqueda híbrida de licitaciones (léxica + vectorial). No consume
+    cuota de preguntas: el coste es un embedding local, no una llamada al LLM.
+    """
+    resultado = buscar_licitaciones(q, k=k)
+    if "error" in resultado:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=resultado["error"]
+        )
+    return resultado
+
+
 @app.post("/preguntar")
 def preguntar(
     pregunta: Pregunta,
@@ -167,6 +207,16 @@ def checkout(
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     return {"checkout_url": url}
+
+
+@app.post("/billing/portal")
+def portal(usuario: Usuario = Depends(usuario_actual)) -> dict[str, str]:  # noqa: B008
+    """Crea una sesión del Billing Portal de Stripe para gestionar/cancelar la suscripción."""
+    try:
+        url = crear_portal_session(usuario)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return {"portal_url": url}
 
 
 @app.post("/billing/webhook", status_code=status.HTTP_204_NO_CONTENT)
