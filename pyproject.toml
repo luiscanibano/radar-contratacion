@@ -54,7 +54,11 @@ search = [
     "pgvector>=0.3",
 ]
 mcp = [
-    "mcp>=1.0",
+    # <2.0: la 2.0.0 (28/07/2026) es una reescritura mayor del SDK para la
+    # nueva versión del protocolo, incompatible con mcp_server/server.py y
+    # auth_middleware.py (rompe al menos mcp.server.fastmcp.FastMCP). El
+    # proyecto mantiene una rama 1.x con parches para quien no haya migrado.
+    "mcp>=1.0,<2.0",
 ]
 # Sin extra propio: los evals solo necesitan `anthropic` y `pydantic` (extra
 # `api`) y, para las métricas de recuperación, el extra `search`. Se quitó
