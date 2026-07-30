@@ -3714,7 +3714,7 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.27" },
     { name = "langfuse", marker = "extra == 'api'", specifier = ">=4.0" },
     { name = "lxml", marker = "extra == 'ingestion'", specifier = ">=5.2" },
-    { name = "mcp", marker = "extra == 'mcp'", specifier = ">=1.0" },
+    { name = "mcp", marker = "extra == 'mcp'", specifier = ">=1.0,<2.0" },
     { name = "numpy", marker = "extra == 'analytics'", specifier = ">=1.26" },
     { name = "pandas", marker = "extra == 'analytics'", specifier = ">=2.2" },
     { name = "pgvector", marker = "extra == 'api'", specifier = ">=0.3" },

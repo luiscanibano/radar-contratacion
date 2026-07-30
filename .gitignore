@@ -45,3 +45,10 @@ Thumbs.db
 
 # Claude Code (configuración local personal)
 .claude/
+
+# Interfaz web (Vite + React): dependencias y build. La imagen Docker
+# construye web/ y copia el resultado a api/static (ver api/Dockerfile).
+web/node_modules/
+web/dist/
+api/static/*
+!api/static/.gitkeep
