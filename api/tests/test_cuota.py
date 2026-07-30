@@ -7,7 +7,7 @@ import uuid
 import pytest
 
 from api.auth import registrar_usuario
-from api.cuota import consumir_cuota
+from api.cuota import consumir_cuota, uso_actual
 from api.db import connect, init_schema
 from api.planes import obtener_plan
 
@@ -34,6 +34,16 @@ def test_plan_gratuito_permite_hasta_su_cuota(usuario):
     for _ in range(cuota):
         assert consumir_cuota(usuario.id) is True
     assert consumir_cuota(usuario.id) is False
+
+
+def test_uso_actual_es_cero_sin_preguntas(usuario):
+    assert uso_actual(usuario.id) == 0
+
+
+def test_uso_actual_cuenta_las_preguntas_consumidas(usuario):
+    for _ in range(3):
+        consumir_cuota(usuario.id)
+    assert uso_actual(usuario.id) == 3
 
 
 def test_plan_ilimitado_nunca_bloquea(usuario):

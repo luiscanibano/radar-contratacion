@@ -16,7 +16,7 @@ import stripe
 from fastapi.testclient import TestClient
 
 from api.auth import create_access_token, registrar_usuario
-from api.billing import crear_checkout_session, plan_actual, procesar_webhook
+from api.billing import crear_checkout_session, crear_portal_session, plan_actual, procesar_webhook
 from api.db import connect, init_schema
 from api.main import app
 from api.planes import FREE, obtener_plan
@@ -184,6 +184,34 @@ def test_plan_actual_con_estado_no_activo_es_gratuito(usuario, stripe_configurad
     assert plan_actual(usuario.id).nombre == FREE
 
 
+# --- crear_portal_session -------------------------------------------------------
+
+
+def test_portal_sin_stripe_configurado_lanza_value_error(usuario):
+    with pytest.raises(ValueError, match="STRIPE_SECRET_KEY"):
+        crear_portal_session(usuario)
+
+
+def test_portal_sin_suscripcion_lanza_value_error(usuario, stripe_configurado):
+    with pytest.raises(ValueError, match="suscripción"):
+        crear_portal_session(usuario)
+
+
+def test_portal_con_suscripcion_crea_sesion_de_stripe(usuario, stripe_configurado):
+    evento = _evento_suscripcion(usuario.id, "pro", "active", customer="cus_test_1")
+    with patch("stripe.Webhook.construct_event", return_value=evento):
+        procesar_webhook(b"{}", "firma")
+
+    sesion_falsa = Mock(url="https://billing.stripe.com/session/x")
+    with patch("stripe.billing_portal.Session.create", return_value=sesion_falsa) as mock_create:
+        url = crear_portal_session(usuario)
+
+    assert url == "https://billing.stripe.com/session/x"
+    kwargs = mock_create.call_args.kwargs
+    assert kwargs["customer"] == "cus_test_1"
+    assert kwargs["return_url"] == settings.billing_portal_return_url
+
+
 # --- endpoints HTTP -----------------------------------------------------------
 
 
@@ -239,6 +267,69 @@ def test_endpoint_webhook_aplica_el_evento(cliente, usuario, stripe_configurado)
         )
     assert respuesta.status_code == 204
     assert plan_actual(usuario.id).nombre == "basico"
+
+
+def test_endpoint_portal_devuelve_la_url_de_stripe(cliente, usuario, stripe_configurado):
+    evento = _evento_suscripcion(usuario.id, "pro", "active")
+    with patch("stripe.Webhook.construct_event", return_value=evento):
+        procesar_webhook(b"{}", "firma")
+
+    token = create_access_token(usuario)
+    sesion_falsa = Mock(url="https://billing.stripe.com/session/x")
+    with patch("stripe.billing_portal.Session.create", return_value=sesion_falsa):
+        respuesta = cliente.post("/billing/portal", headers={"Authorization": f"Bearer {token}"})
+    assert respuesta.status_code == 200
+    assert respuesta.json() == {"portal_url": "https://billing.stripe.com/session/x"}
+
+
+def test_endpoint_portal_sin_token_da_401(cliente):
+    respuesta = cliente.post("/billing/portal")
+    assert respuesta.status_code == 401
+
+
+def test_endpoint_portal_sin_suscripcion_da_400(cliente, usuario, stripe_configurado):
+    token = create_access_token(usuario)
+    respuesta = cliente.post("/billing/portal", headers={"Authorization": f"Bearer {token}"})
+    assert respuesta.status_code == 400
+
+
+def test_endpoint_mi_plan_gratuito_recien_creado(cliente, usuario):
+    token = create_access_token(usuario)
+    respuesta = cliente.get("/me/plan", headers={"Authorization": f"Bearer {token}"})
+    assert respuesta.status_code == 200
+    assert respuesta.json() == {"plan": FREE, "cuota": 10, "usadas": 0, "restantes": 10}
+
+
+def test_endpoint_mi_plan_tras_suscripcion_pro(cliente, usuario, stripe_configurado):
+    evento = _evento_suscripcion(usuario.id, "pro", "active")
+    with patch("stripe.Webhook.construct_event", return_value=evento):
+        procesar_webhook(b"{}", "firma")
+
+    token = create_access_token(usuario)
+    respuesta = cliente.get("/me/plan", headers={"Authorization": f"Bearer {token}"})
+    assert respuesta.status_code == 200
+    assert respuesta.json() == {"plan": "pro", "cuota": 1000, "usadas": 0, "restantes": 1000}
+
+
+def test_endpoint_mi_plan_ilimitado_no_tiene_restantes(cliente, usuario, stripe_configurado):
+    evento = _evento_suscripcion(usuario.id, "ilimitado", "active")
+    with patch("stripe.Webhook.construct_event", return_value=evento):
+        procesar_webhook(b"{}", "firma")
+
+    token = create_access_token(usuario)
+    respuesta = cliente.get("/me/plan", headers={"Authorization": f"Bearer {token}"})
+    assert respuesta.status_code == 200
+    assert respuesta.json() == {
+        "plan": "ilimitado",
+        "cuota": None,
+        "usadas": 0,
+        "restantes": None,
+    }
+
+
+def test_endpoint_mi_plan_sin_token_da_401(cliente):
+    respuesta = cliente.get("/me/plan")
+    assert respuesta.status_code == 401
 
 
 def test_preguntar_devuelve_402_al_agotar_la_cuota(cliente, usuario):
