@@ -68,6 +68,11 @@ class Settings(BaseSettings):
     resend_api_key: str = ""
     alert_from_email: str = "alertas@radarcontratacion.com"
 
+    # Base para construir enlaces absolutos en emails transaccionales
+    # (confirmación de cuenta, reset de contraseña). Mismo patrón que
+    # billing_success_url/billing_cancel_url.
+    app_base_url: str = "http://localhost:8000"
+
     @property
     def postgres_dsn(self) -> str:
         return (

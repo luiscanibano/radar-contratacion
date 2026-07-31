@@ -10,6 +10,32 @@ create table if not exists usuarios (
     creado_en      timestamptz not null default now()
 );
 
+-- email_verificado con default true: los usuarios ya existentes en
+-- producción se registraron antes de que existiera esta comprobación y se
+-- consideran de confianza. El default baja a false justo después, así que
+-- solo los registros *nuevos* (que lo insertan explícitamente) lo requieren.
+alter table usuarios add column if not exists email_verificado boolean not null default true;
+alter table usuarios alter column email_verificado set default false;
+
+-- Se incrementa al resetear la contraseña: el claim `sv` del JWT deja de
+-- coincidir y todas las sesiones abiertas antes del reset quedan inválidas
+-- (ver usuario_actual en api/auth.py).
+alter table usuarios add column if not exists sesion_version integer not null default 0;
+
+-- Tokens de un solo uso: confirmación de email y reset de contraseña. Se
+-- guarda el hash (sha256), no el token en claro, igual que un password
+-- hasheado — así una fuga de la BD no permite canjear tokens todavía
+-- válidos.
+create table if not exists tokens_un_uso (
+    token_hash  text primary key,
+    usuario_id  bigint not null references usuarios(id) on delete cascade,
+    tipo        text not null,              -- 'verificacion' | 'reset_password'
+    expira_en   timestamptz not null,
+    usado_en    timestamptz,
+    creado_en   timestamptz not null default now()
+);
+create index if not exists tokens_un_uso_usuario_idx on tokens_un_uso (usuario_id, tipo);
+
 -- Suscripción de Stripe del usuario. Una fila por usuario (upsert en cada
 -- evento de webhook): sin fila = plan gratuito. `plan` y `estado` reflejan el
 -- último evento visto de Stripe (ver api/billing.py); `estado` usa los mismos

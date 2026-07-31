@@ -1,14 +1,21 @@
-"""Auth: hash de contraseñas, JWT y dependencia `usuario_actual`.
+"""Auth: hash de contraseñas, JWT, tokens de un solo uso y dependencia
+`usuario_actual`.
 
-Stateless: `usuario_actual` decodifica el JWT y no vuelve a tocar Postgres en
-cada petición protegida (los claims llevan id + email, que es cuanto necesita
-el resto de la API). Solo se toca la base de datos al registrar o hacer login.
+Casi stateless: `usuario_actual` decodifica el JWT sin tocar Postgres, pero
+además compara el claim `sv` (sesion_version) contra la base de datos — una
+única consulta indexada por PK. Es el coste de poder invalidar todas las
+sesiones abiertas de un usuario (p. ej. tras un reset de contraseña) sin
+mantener una lista de tokens revocados: basta con incrementar
+`sesion_version` y cualquier JWT anterior deja de coincidir.
 """
 
 from __future__ import annotations
 
+import hashlib
+import secrets
 import time
 from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
 
 import jwt
 import psycopg
@@ -36,11 +43,19 @@ _bearer = HTTPBearer(auto_error=False)
 SESSION_COOKIE_NAME = "radar_session"
 _MAX_AGE_SESION = settings.jwt_expire_minutes * 60
 
+# TTL de los tokens de un solo uso (ver crear_token_verificacion/crear_token_reset).
+_TTL_VERIFICACION = timedelta(hours=24)
+_TTL_RESET = timedelta(minutes=30)
+
 
 @dataclass
 class Usuario:
     id: int
     email: str
+    # Con default para no romper los sitios (incl. tests) que construyen
+    # Usuario(id=.., email=..) a mano sin pasar estos dos campos.
+    email_verificado: bool = True
+    sesion_version: int = 0
 
 
 def hash_password(password: str) -> str:
@@ -59,6 +74,7 @@ def create_access_token(usuario: Usuario) -> str:
     payload = {
         "sub": str(usuario.id),
         "email": usuario.email,
+        "sv": usuario.sesion_version,
         "iat": ahora,
         "exp": ahora + settings.jwt_expire_minutes * 60,
     }
@@ -66,13 +82,15 @@ def create_access_token(usuario: Usuario) -> str:
 
 
 def registrar_usuario(email: str, password: str) -> Usuario:
-    """Crea un usuario nuevo. Lanza ValueError si el email ya existe."""
+    """Crea un usuario nuevo sin el email confirmado. Lanza ValueError si el
+    email ya existe."""
     password_hash = hash_password(password)
     with connect() as con:
         try:
             with con.cursor() as cur:
                 cur.execute(
-                    "insert into usuarios (email, password_hash) values (%s, %s) returning id",
+                    "insert into usuarios (email, password_hash, email_verificado)"
+                    " values (%s, %s, false) returning id",
                     (email, password_hash),
                 )
                 (usuario_id,) = cur.fetchone()
@@ -80,21 +98,134 @@ def registrar_usuario(email: str, password: str) -> Usuario:
         except psycopg.errors.UniqueViolation as exc:
             con.rollback()
             raise ValueError(f"Ya existe un usuario con el email {email}") from exc
-    return Usuario(id=usuario_id, email=email)
+    return Usuario(id=usuario_id, email=email, email_verificado=False)
 
 
 def autenticar_usuario(email: str, password: str) -> Usuario | None:
-    """Verifica email + contraseña. Devuelve None si no coinciden."""
+    """Verifica email + contraseña. Devuelve None si no coinciden.
+
+    No comprueba `email_verificado`: esta función solo responde "¿la
+    contraseña es correcta?" — bloquear el login de una cuenta sin confirmar
+    es una decisión del endpoint (ver /auth/login en api/main.py), no de la
+    verificación de credenciales en sí.
+    """
     with connect() as con:
         with con.cursor() as cur:
-            cur.execute("select id, password_hash from usuarios where email = %s", (email,))
+            cur.execute(
+                "select id, password_hash, email_verificado, sesion_version"
+                " from usuarios where email = %s",
+                (email,),
+            )
             fila = cur.fetchone()
     if fila is None:
         return None
-    usuario_id, password_hash = fila
+    usuario_id, password_hash, email_verificado, sesion_version = fila
     if not verify_password(password, password_hash):
         return None
-    return Usuario(id=usuario_id, email=email)
+    return Usuario(
+        id=usuario_id,
+        email=email,
+        email_verificado=email_verificado,
+        sesion_version=sesion_version,
+    )
+
+
+def buscar_usuario_por_email(email: str) -> Usuario | None:
+    """Como obtener_usuario, pero por email (usado por /auth/reenviar-verificacion
+    y /auth/olvide-password para saber si hay que mandar el email, sin exponer
+    en la respuesta si la cuenta existe)."""
+    with connect() as con:
+        with con.cursor() as cur:
+            cur.execute(
+                "select id, email_verificado, sesion_version from usuarios where email = %s",
+                (email,),
+            )
+            fila = cur.fetchone()
+    if fila is None:
+        return None
+    usuario_id, email_verificado, sesion_version = fila
+    return Usuario(
+        id=usuario_id, email=email, email_verificado=email_verificado, sesion_version=sesion_version
+    )
+
+
+def obtener_usuario(usuario_id: int) -> Usuario | None:
+    """Lee el estado actual de un usuario (usado tras canjear un token de un
+    solo uso, para construir su JWT con datos frescos)."""
+    with connect() as con:
+        with con.cursor() as cur:
+            cur.execute(
+                "select email, email_verificado, sesion_version from usuarios where id = %s",
+                (usuario_id,),
+            )
+            fila = cur.fetchone()
+    if fila is None:
+        return None
+    email, email_verificado, sesion_version = fila
+    return Usuario(
+        id=usuario_id, email=email, email_verificado=email_verificado, sesion_version=sesion_version
+    )
+
+
+def marcar_email_verificado(usuario_id: int) -> None:
+    with connect() as con:
+        con.execute("update usuarios set email_verificado = true where id = %s", (usuario_id,))
+        con.commit()
+
+
+def cambiar_password(usuario_id: int, password: str) -> None:
+    """Fija una contraseña nueva y revoca todas las sesiones abiertas de este
+    usuario (incrementa sesion_version, ver usuario_actual)."""
+    password_hash = hash_password(password)
+    with connect() as con:
+        con.execute(
+            "update usuarios set password_hash = %s, sesion_version = sesion_version + 1"
+            " where id = %s",
+            (password_hash, usuario_id),
+        )
+        con.commit()
+
+
+def _hash_token(token: str) -> str:
+    return hashlib.sha256(token.encode()).hexdigest()
+
+
+def _crear_token(usuario_id: int, tipo: str, ttl: timedelta) -> str:
+    token = secrets.token_urlsafe(32)
+    expira_en = datetime.now(UTC) + ttl
+    with connect() as con:
+        con.execute(
+            "insert into tokens_un_uso (token_hash, usuario_id, tipo, expira_en)"
+            " values (%s, %s, %s, %s)",
+            (_hash_token(token), usuario_id, tipo, expira_en),
+        )
+        con.commit()
+    return token
+
+
+def crear_token_verificacion(usuario_id: int) -> str:
+    return _crear_token(usuario_id, "verificacion", _TTL_VERIFICACION)
+
+
+def crear_token_reset(usuario_id: int) -> str:
+    return _crear_token(usuario_id, "reset_password", _TTL_RESET)
+
+
+def consumir_token(token: str, tipo: str) -> int | None:
+    """Valida un token de un solo uso y lo marca gastado en el mismo UPDATE
+    (evita que dos peticiones simultáneas lo canjeen dos veces). Devuelve el
+    usuario_id o None si es inválido, ya usado o caducado."""
+    with connect() as con:
+        with con.cursor() as cur:
+            cur.execute(
+                "update tokens_un_uso set usado_en = now()"
+                " where token_hash = %s and tipo = %s and usado_en is null and expira_en > now()"
+                " returning usuario_id",
+                (_hash_token(token), tipo),
+            )
+            fila = cur.fetchone()
+        con.commit()
+    return fila[0] if fila else None
 
 
 def decode_token(token: str) -> Usuario:
@@ -103,7 +234,9 @@ def decode_token(token: str) -> Usuario:
         payload = jwt.decode(token, settings.jwt_secret, algorithms=["HS256"])
     except jwt.PyJWTError as exc:
         raise ValueError("Token inválido o caducado") from exc
-    return Usuario(id=int(payload["sub"]), email=payload["email"])
+    return Usuario(
+        id=int(payload["sub"]), email=payload["email"], sesion_version=payload.get("sv", 0)
+    )
 
 
 def fijar_cookie_sesion(response: Response, token: str) -> None:
@@ -144,9 +277,19 @@ def usuario_actual(
             detail="No autenticado",
         )
     try:
-        return decode_token(token)
+        usuario = decode_token(token)
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=str(exc),
         ) from exc
+    with connect() as con:
+        with con.cursor() as cur:
+            cur.execute("select sesion_version from usuarios where id = %s", (usuario.id,))
+            fila = cur.fetchone()
+    if fila is None or fila[0] != usuario.sesion_version:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Sesión inválida, vuelve a iniciar sesión.",
+        )
+    return usuario

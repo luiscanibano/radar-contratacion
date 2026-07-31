@@ -16,7 +16,7 @@ from fastapi import (
     Response,
     status,
 )
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, EmailStr, Field
 
@@ -27,15 +27,24 @@ from api.auth import (
     Usuario,
     autenticar_usuario,
     borrar_cookie_sesion,
+    buscar_usuario_por_email,
+    cambiar_password,
+    consumir_token,
+    crear_token_reset,
+    crear_token_verificacion,
     create_access_token,
     fijar_cookie_sesion,
+    marcar_email_verificado,
+    obtener_usuario,
     registrar_usuario,
     usuario_actual,
 )
 from api.billing import crear_checkout_session, crear_portal_session, plan_actual, procesar_webhook
 from api.cuota import consumir_cuota, uso_actual
+from api.email import enviar_email
 from api.observabilidad import emitir
 from api.rate_limit import limitar
+from api.settings import settings
 from mcp_server.auth_middleware import BearerAuthASGIMiddleware
 from mcp_server.server import mcp
 
@@ -43,6 +52,10 @@ from mcp_server.server import mcp
 # credential stuffing sin necesitar un backend compartido (ver api/rate_limit.py).
 _limite_login = limitar("login", intentos=10, ventana_segundos=300)
 _limite_registro = limitar("registro", intentos=5, ventana_segundos=3600)
+_limite_verificar = limitar("verificar", intentos=10, ventana_segundos=300)
+_limite_reenvio = limitar("reenvio-verificacion", intentos=5, ventana_segundos=3600)
+_limite_reset_solicitud = limitar("olvide-password", intentos=5, ventana_segundos=3600)
+_limite_reset_confirmar = limitar("resetear-password", intentos=10, ventana_segundos=300)
 
 _mcp_app = mcp.streamable_http_app()
 
@@ -113,11 +126,6 @@ def favicon() -> FileResponse:
     return FileResponse(_STATIC / "favicon.svg")
 
 
-@app.get("/theme-init.js", include_in_schema=False)
-def theme_init_js() -> FileResponse:
-    return FileResponse(_STATIC / "theme-init.js", media_type="application/javascript")
-
-
 @app.get("/", include_in_schema=False)
 def portada() -> FileResponse:
     return FileResponse(_STATIC / "index.html")
@@ -166,9 +174,24 @@ class CredencialesRegistro(BaseModel):
     password: str = Field(min_length=8)
 
 
+class SolicitudEmail(BaseModel):
+    """Cuerpo de /auth/reenviar-verificacion y /auth/olvide-password."""
+
+    email: EmailStr
+
+
+class ConfirmarReset(BaseModel):
+    token: str
+    password: str = Field(min_length=8)
+
+
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+
+class MensajeRespuesta(BaseModel):
+    mensaje: str
 
 
 class PlanSolicitado(BaseModel):
@@ -184,19 +207,50 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+def _enviar_email_verificacion(usuario: Usuario) -> None:
+    # Un fallo de Resend (no configurado, caído...) no debe tumbar el
+    # registro: la cuenta ya está creada y /auth/reenviar-verificacion es la
+    # vía de recuperación (mismo criterio que ejecutar_alertas en api/alertas.py).
+    try:
+        token = crear_token_verificacion(usuario.id)
+        enlace = f"{settings.app_base_url}/auth/verificar?token={token}"
+        enviar_email(
+            usuario.email,
+            "Confirma tu cuenta en Radar de Contratación",
+            f"<p>Confirma tu cuenta pulsando este enlace (caduca en 24 horas):</p>"
+            f'<p><a href="{enlace}">{enlace}</a></p>',
+        )
+    except Exception:  # noqa: BLE001 — un email que falla no debe romper el registro
+        pass
+
+
+def _enviar_email_reset(usuario: Usuario) -> None:
+    try:
+        token = crear_token_reset(usuario.id)
+        enlace = f"{settings.app_base_url}/app?reset_token={token}"
+        enviar_email(
+            usuario.email,
+            "Restablece tu contraseña en Radar de Contratación",
+            f"<p>Restablece tu contraseña pulsando este enlace (caduca en 30 minutos):</p>"
+            f'<p><a href="{enlace}">{enlace}</a></p>'
+            f"<p>Si no has sido tú, ignora este email.</p>",
+        )
+    except Exception:  # noqa: BLE001 — igual que _enviar_email_verificacion
+        pass
+
+
 @app.post(
     "/auth/registro",
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(_limite_registro)],
 )
-def registro(credenciales: CredencialesRegistro, response: Response) -> Token:
+def registro(credenciales: CredencialesRegistro) -> MensajeRespuesta:
     try:
         usuario = registrar_usuario(credenciales.email, credenciales.password)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
-    token = create_access_token(usuario)
-    fijar_cookie_sesion(response, token)
-    return Token(access_token=token)
+    _enviar_email_verificacion(usuario)
+    return MensajeRespuesta(mensaje="Te hemos enviado un email para confirmar tu cuenta.")
 
 
 @app.post("/auth/login", dependencies=[Depends(_limite_login)])
@@ -207,6 +261,11 @@ def login(credenciales: Credenciales, response: Response) -> Token:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Email o contraseña incorrectos",
         )
+    if not usuario.email_verificado:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Confirma tu email antes de iniciar sesión. Revisa tu bandeja de entrada.",
+        )
     token = create_access_token(usuario)
     fijar_cookie_sesion(response, token)
     return Token(access_token=token)
@@ -215,6 +274,57 @@ def login(credenciales: Credenciales, response: Response) -> Token:
 @app.post("/auth/logout", status_code=status.HTTP_204_NO_CONTENT)
 def logout(response: Response) -> None:
     borrar_cookie_sesion(response)
+
+
+@app.get("/auth/verificar", include_in_schema=False, dependencies=[Depends(_limite_verificar)])
+def verificar_email(token: str) -> RedirectResponse:
+    """Enlace de confirmación mandado por email. No es API pública (no hay
+    cliente que la llame salvo el navegador siguiendo el enlace), de ahí el
+    GET con redirect en vez de un endpoint JSON."""
+    usuario_id = consumir_token(token, "verificacion")
+    if usuario_id is None:
+        return RedirectResponse(url="/app?verificado=0")
+    marcar_email_verificado(usuario_id)
+    usuario = obtener_usuario(usuario_id)
+    respuesta = RedirectResponse(url="/app?verificado=1")
+    if usuario is not None:
+        fijar_cookie_sesion(respuesta, create_access_token(usuario))
+    return respuesta
+
+
+@app.post("/auth/reenviar-verificacion", dependencies=[Depends(_limite_reenvio)])
+def reenviar_verificacion(solicitud: SolicitudEmail) -> MensajeRespuesta:
+    usuario = buscar_usuario_por_email(solicitud.email)
+    if usuario is not None and not usuario.email_verificado:
+        _enviar_email_verificacion(usuario)
+    return MensajeRespuesta(
+        mensaje="Si la cuenta existe y no está verificada, te hemos enviado un email."
+    )
+
+
+@app.post("/auth/olvide-password", dependencies=[Depends(_limite_reset_solicitud)])
+def olvide_password(solicitud: SolicitudEmail) -> MensajeRespuesta:
+    usuario = buscar_usuario_por_email(solicitud.email)
+    if usuario is not None:
+        _enviar_email_reset(usuario)
+    return MensajeRespuesta(
+        mensaje="Si la cuenta existe, te hemos enviado un email para restablecer la contraseña."
+    )
+
+
+@app.post("/auth/resetear-password", dependencies=[Depends(_limite_reset_confirmar)])
+def resetear_password(solicitud: ConfirmarReset, response: Response) -> Token:
+    usuario_id = consumir_token(solicitud.token, "reset_password")
+    if usuario_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Token inválido o caducado."
+        )
+    cambiar_password(usuario_id, solicitud.password)
+    usuario = obtener_usuario(usuario_id)
+    assert usuario is not None  # el update de cambiar_password acaba de tocar esta fila
+    token = create_access_token(usuario)
+    fijar_cookie_sesion(response, token)
+    return Token(access_token=token)
 
 
 @app.post("/auth/mcp-token")

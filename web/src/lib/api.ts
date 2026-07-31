@@ -87,12 +87,17 @@ export async function login(credenciales: Credenciales): Promise<void> {
     { method: "POST", body: JSON.stringify(credenciales) },
     { gestionar401: false },
   );
+  if (respuesta.status === 403) {
+    throw new ApiError(403, await detalleError(respuesta, "Confirma tu email antes de iniciar sesión."));
+  }
   if (!respuesta.ok) {
     throw new ApiError(respuesta.status, await detalleError(respuesta, "No se pudo iniciar sesión."));
   }
 }
 
-export async function registrar(credenciales: Credenciales): Promise<void> {
+/** El registro ya no abre sesión: la cuenta queda pendiente de confirmar por
+ * email (ver /auth/verificar) y el backend devuelve solo un mensaje. */
+export async function registrar(credenciales: Credenciales): Promise<string> {
   const respuesta = await llamar(
     "/auth/registro",
     { method: "POST", body: JSON.stringify(credenciales) },
@@ -103,6 +108,48 @@ export async function registrar(credenciales: Credenciales): Promise<void> {
   }
   if (!respuesta.ok) {
     throw new ApiError(respuesta.status, await detalleError(respuesta, "No se pudo crear la cuenta."));
+  }
+  const datos = await respuesta.json();
+  return datos.mensaje;
+}
+
+export async function reenviarVerificacion(email: string): Promise<string> {
+  const respuesta = await llamar(
+    "/auth/reenviar-verificacion",
+    { method: "POST", body: JSON.stringify({ email }) },
+    { gestionar401: false },
+  );
+  if (!respuesta.ok) {
+    throw new ApiError(respuesta.status, await detalleError(respuesta, "No se pudo reenviar el email."));
+  }
+  const datos = await respuesta.json();
+  return datos.mensaje;
+}
+
+export async function olvidePassword(email: string): Promise<string> {
+  const respuesta = await llamar(
+    "/auth/olvide-password",
+    { method: "POST", body: JSON.stringify({ email }) },
+    { gestionar401: false },
+  );
+  if (!respuesta.ok) {
+    throw new ApiError(respuesta.status, await detalleError(respuesta, "No se pudo procesar la solicitud."));
+  }
+  const datos = await respuesta.json();
+  return datos.mensaje;
+}
+
+export async function resetearPassword(token: string, password: string): Promise<void> {
+  const respuesta = await llamar(
+    "/auth/resetear-password",
+    { method: "POST", body: JSON.stringify({ token, password }) },
+    { gestionar401: false },
+  );
+  if (!respuesta.ok) {
+    throw new ApiError(
+      respuesta.status,
+      await detalleError(respuesta, "No se pudo restablecer la contraseña."),
+    );
   }
 }
 

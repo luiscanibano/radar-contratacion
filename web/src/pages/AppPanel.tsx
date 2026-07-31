@@ -32,10 +32,27 @@ function leerPlanPendiente(): PlanPendiente | null {
   return plan === "basico" || plan === "pro" || plan === "ilimitado" ? plan : null;
 }
 
+/** `?verificado=1|0`, puesto por el redirect de GET /auth/verificar (ver
+ * api/main.py): 1 si el enlace del email era válido, 0 si estaba caducado o
+ * ya se había usado. */
+function leerVerificado(): "1" | "0" | null {
+  const v = new URLSearchParams(location.search).get("verificado");
+  return v === "1" || v === "0" ? v : null;
+}
+
+/** `?reset_token=...`, el enlace del email de "olvidé mi contraseña" (ver
+ * /auth/olvide-password): fuerza el formulario de contraseña nueva aunque ya
+ * haya una sesión abierta. */
+function leerResetToken(): string | null {
+  return new URLSearchParams(location.search).get("reset_token");
+}
+
 export function AppPanel() {
   const [vista, setVista] = useState<Vista>({ estado: "cargando" });
   const [seccion, setSeccion] = useState<Seccion>(seccionDesdeHash);
   const [planPendiente] = useState<PlanPendiente | null>(leerPlanPendiente);
+  const [verificado] = useState<"1" | "0" | null>(leerVerificado);
+  const [resetToken] = useState<string | null>(leerResetToken);
   const [errorCheckout, setErrorCheckout] = useState("");
   const checkoutLanzado = useRef(false);
 
@@ -46,15 +63,27 @@ export function AppPanel() {
       const yo = await quienSoy();
       setVista({ estado: "panel", email: yo.email });
     } catch {
-      setVista({ estado: "auth" });
+      setVista({
+        estado: "auth",
+        aviso: verificado === "0" ? "El enlace de confirmación no es válido o ha caducado." : undefined,
+      });
     }
   }
 
   useEffect(() => {
-    comprobarSesion();
-    // Limpia el ?plan= de la URL en cuanto lo hemos leído: no debe sobrevivir
-    // a un F5 ni relanzar el checkout si el usuario vuelve atrás.
-    if (planPendiente) {
+    // Con un token de reset en la URL, el formulario de contraseña nueva
+    // tiene prioridad sobre cualquier sesión ya abierta: no tiene sentido
+    // esperar a comprobarSesion (que llevaría directo al panel) si el
+    // usuario ha llegado aquí explícitamente para cambiar su contraseña.
+    if (resetToken) {
+      setVista({ estado: "auth" });
+    } else {
+      comprobarSesion();
+    }
+    // Limpia ?plan=/?verificado=/?reset_token= de la URL en cuanto los hemos
+    // leído: no deben sobrevivir a un F5 ni (en el caso del token) quedar
+    // colgados en el historial del navegador.
+    if (planPendiente || verificado || resetToken) {
       history.replaceState(null, "", location.pathname + location.hash);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -111,6 +140,7 @@ export function AppPanel() {
               <motion.div key="auth" exit={{ opacity: 0 }}>
                 <AuthCard
                   registroInicial={location.hash === "#registro" || planPendiente !== null}
+                  resetToken={resetToken ?? undefined}
                   aviso={vista.aviso}
                   onAutenticado={comprobarSesion}
                 />
@@ -124,6 +154,9 @@ export function AppPanel() {
                 transition={{ duration: 0.4 }}
                 className="space-y-6"
               >
+                {verificado === "1" && (
+                  <p className="text-sm text-emerald-600">Cuenta confirmada. ¡Bienvenido!</p>
+                )}
                 {errorCheckout && <p className="text-sm text-destructive">{errorCheckout}</p>}
                 <nav className="flex flex-wrap gap-2">
                   {SECCIONES.map((s) => (
