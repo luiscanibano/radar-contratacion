@@ -11,16 +11,15 @@ import uuid
 
 import jwt
 import pytest
-from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 from api.auth import (
+    SESSION_COOKIE_NAME,
     Usuario,
     autenticar_usuario,
     create_access_token,
     hash_password,
     registrar_usuario,
-    usuario_actual,
     verify_password,
 )
 from api.db import connect, init_schema
@@ -68,16 +67,6 @@ def test_create_access_token_decodifica_con_los_claims_esperados():
     assert payload["email"] == "a@b.com"
 
 
-def test_usuario_actual_rechaza_token_con_secreto_distinto():
-    otro_token = jwt.encode({"sub": "1", "email": "x@y.com"}, "otro-secreto", algorithm="HS256")
-    from fastapi.security import HTTPAuthorizationCredentials
-
-    credenciales = HTTPAuthorizationCredentials(scheme="Bearer", credentials=otro_token)
-    with pytest.raises(HTTPException) as exc_info:
-        usuario_actual(credenciales)
-    assert exc_info.value.status_code == 401
-
-
 # --- registro / login (Postgres real) ----------------------------------------
 
 
@@ -110,7 +99,19 @@ def test_autenticar_usuario_inexistente_devuelve_none():
 
 @pytest.fixture
 def cliente():
-    return TestClient(app)
+    # base_url https: la cookie de sesión lleva Secure, y el jar de cookies
+    # de httpx (como cualquier navegador) no la reenvía en peticiones
+    # posteriores si cree que está hablando en claro por http. No sale a la
+    # red de verdad — sigue siendo el transporte ASGI in-process.
+    return TestClient(app, base_url="https://testserver")
+
+
+def _ip_unica() -> str:
+    # Cabecera X-Forwarded-For con una IP de ejemplo (RFC 5737, TEST-NET-3)
+    # distinta por test: aísla el contador de rate limiting (api/rate_limit.py)
+    # de los demás tests que comparten la IP por defecto del TestClient.
+    octeto = uuid.uuid4().int % 254 + 1
+    return f"203.0.113.{octeto}"
 
 
 def test_endpoint_registro_y_login(cliente, email):
@@ -119,19 +120,76 @@ def test_endpoint_registro_y_login(cliente, email):
     )
     assert respuesta.status_code == 201
     assert "access_token" in respuesta.json()
+    cookie = respuesta.cookies.get(SESSION_COOKIE_NAME)
+    assert cookie is not None
 
+    cliente.cookies.clear()
     respuesta = cliente.post("/auth/login", json={"email": email, "password": "contraseña-larga"})
     assert respuesta.status_code == 200
-    token = respuesta.json()["access_token"]
+    assert respuesta.cookies.get(SESSION_COOKIE_NAME) is not None
 
-    respuesta = cliente.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
+    # La cookie httpOnly la reenvía el propio cliente (como un navegador):
+    # /auth/me no necesita ninguna cabecera Authorization.
+    respuesta = cliente.get("/auth/me")
     assert respuesta.status_code == 200
     assert respuesta.json()["email"] == email
 
 
 def test_endpoint_login_con_credenciales_incorrectas_da_401(cliente, email):
     registrar_usuario(email, "contraseña-larga")
-    respuesta = cliente.post("/auth/login", json={"email": email, "password": "incorrecta"})
+    respuesta = cliente.post(
+        "/auth/login",
+        json={"email": email, "password": "incorrecta"},
+        headers={"X-Forwarded-For": _ip_unica()},
+    )
+    assert respuesta.status_code == 401
+
+
+def test_registro_rechaza_contraseña_corta(cliente):
+    respuesta = cliente.post(
+        "/auth/registro",
+        json={"email": f"{uuid.uuid4().hex}@example.com", "password": "corta12"},
+    )
+    assert respuesta.status_code == 422
+
+
+def test_registro_rechaza_email_con_formato_invalido(cliente):
+    respuesta = cliente.post(
+        "/auth/registro",
+        json={"email": "no-es-un-email", "password": "contraseña-larga"},
+    )
+    assert respuesta.status_code == 422
+
+
+def test_logout_borra_la_cookie_de_sesion(cliente, email):
+    registrar_usuario(email, "contraseña-larga")
+    cliente.post("/auth/login", json={"email": email, "password": "contraseña-larga"})
+    assert cliente.get("/auth/me").status_code == 200
+
+    respuesta = cliente.post("/auth/logout")
+    assert respuesta.status_code == 204
+    assert cliente.get("/auth/me").status_code == 401
+
+
+def test_mcp_token_funciona_como_bearer_sin_cookie(email):
+    registrado = registrar_usuario(email, "contraseña-larga")
+    cliente_con_cookie = TestClient(app, base_url="https://testserver")
+    cliente_con_cookie.post("/auth/login", json={"email": email, "password": "contraseña-larga"})
+
+    respuesta = cliente_con_cookie.post("/auth/mcp-token")
+    assert respuesta.status_code == 200
+    token = respuesta.json()["access_token"]
+
+    # Cliente nuevo, sin ninguna cookie: el token de /auth/mcp-token debe
+    # bastar por sí solo como Authorization: Bearer (uso desde MCP/API).
+    cliente_sin_cookie = TestClient(app, base_url="https://testserver")
+    respuesta = cliente_sin_cookie.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert respuesta.status_code == 200
+    assert respuesta.json()["email"] == registrado.email
+
+
+def test_login_con_cabecera_authorization_invalida_da_401(cliente):
+    respuesta = cliente.get("/auth/me", headers={"Authorization": "Bearer token-falso"})
     assert respuesta.status_code == 401
 
 
@@ -143,3 +201,34 @@ def test_preguntar_sin_token_da_401(cliente):
 def test_consultar_sin_token_da_401(cliente):
     respuesta = cliente.post("/consultar", json={"sql": "select 1"})
     assert respuesta.status_code == 401
+
+
+def test_login_con_demasiados_intentos_da_429(cliente, email):
+    registrar_usuario(email, "contraseña-larga")
+    cabeceras = {"X-Forwarded-For": _ip_unica()}
+    for _ in range(10):
+        respuesta = cliente.post(
+            "/auth/login",
+            json={"email": email, "password": "incorrecta"},
+            headers=cabeceras,
+        )
+        assert respuesta.status_code == 401
+    respuesta = cliente.post(
+        "/auth/login",
+        json={"email": email, "password": "incorrecta"},
+        headers=cabeceras,
+    )
+    assert respuesta.status_code == 429
+
+
+def test_cabeceras_de_seguridad_presentes(cliente):
+    respuesta = cliente.get("/health")
+    assert respuesta.headers["x-content-type-options"] == "nosniff"
+    assert respuesta.headers["x-frame-options"] == "DENY"
+    assert "Content-Security-Policy" in respuesta.headers
+    assert "Strict-Transport-Security" in respuesta.headers
+
+
+def test_docs_no_lleva_csp_estricta_por_el_cdn_de_swagger(cliente):
+    respuesta = cliente.get("/docs")
+    assert "content-security-policy" not in {k.lower() for k in respuesta.headers.keys()}

@@ -14,14 +14,27 @@ import jwt
 import psycopg
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, Response, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from api.db import connect
 from api.settings import settings
 
 _hasher = PasswordHasher()
-_bearer = HTTPBearer()
+# auto_error=False: la cabecera Authorization es solo el *fallback* de
+# usuario_actual (MCP, API, clientes que no son el navegador) — la interfaz
+# web se autentica con la cookie de sesión, así que su ausencia no debe dar
+# 403 antes de haber podido mirar la cookie.
+_bearer = HTTPBearer(auto_error=False)
+
+# Nombre de la cookie de sesión de la interfaz web. httpOnly (JS no puede
+# leerla, así que un XSS no puede robarla) + Secure (solo viaja por HTTPS) +
+# SameSite=Strict (el navegador nunca la manda en peticiones iniciadas desde
+# otro sitio, lo que también cubre CSRF sin necesitar un token aparte: esta
+# app no tiene ningún caso de uso legítimo que dependa de mandarla
+# cross-site). Vive el mismo tiempo que el JWT que contiene.
+SESSION_COOKIE_NAME = "radar_session"
+_MAX_AGE_SESION = settings.jwt_expire_minutes * 60
 
 
 @dataclass
@@ -93,12 +106,45 @@ def decode_token(token: str) -> Usuario:
     return Usuario(id=int(payload["sub"]), email=payload["email"])
 
 
+def fijar_cookie_sesion(response: Response, token: str) -> None:
+    """Fija la cookie de sesión de la interfaz web tras login/registro."""
+    response.set_cookie(
+        key=SESSION_COOKIE_NAME,
+        value=token,
+        max_age=_MAX_AGE_SESION,
+        httponly=True,
+        secure=True,
+        samesite="strict",
+        path="/",
+    )
+
+
+def borrar_cookie_sesion(response: Response) -> None:
+    """Cierra la sesión de la interfaz web (logout)."""
+    response.delete_cookie(key=SESSION_COOKIE_NAME, path="/")
+
+
 def usuario_actual(
-    credenciales: HTTPAuthorizationCredentials = Depends(_bearer),  # noqa: B008
+    request: Request,
+    credenciales: HTTPAuthorizationCredentials | None = Depends(_bearer),  # noqa: B008
 ) -> Usuario:
-    """Dependencia de FastAPI: exige `Authorization: Bearer <token>` válido."""
+    """Dependencia de FastAPI: exige sesión válida.
+
+    Acepta la cookie httpOnly de la interfaz web o, si no hay cookie, una
+    cabecera `Authorization: Bearer <token>` — así los mismos endpoints
+    sirven de API para el token MCP (ver /auth/mcp-token) sin que la web
+    tenga que exponer el JWT a JavaScript.
+    """
+    token = request.cookies.get(SESSION_COOKIE_NAME) or (
+        credenciales.credentials if credenciales else None
+    )
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="No autenticado",
+        )
     try:
-        return decode_token(credenciales.credentials)
+        return decode_token(token)
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

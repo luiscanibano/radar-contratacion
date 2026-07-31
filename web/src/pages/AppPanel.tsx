@@ -8,14 +8,7 @@ import { AlertsManager } from "@/components/AlertsManager";
 import { BuscadorLicitaciones } from "@/components/BuscadorLicitaciones";
 import { CuentaSeccion } from "@/components/CuentaSeccion";
 import { Button } from "@/components/ui/button";
-import {
-  ApiError,
-  EVENTO_SESION_CADUCADA,
-  clearToken,
-  crearCheckout,
-  getToken,
-  quienSoy,
-} from "@/lib/api";
+import { ApiError, EVENTO_SESION_CADUCADA, crearCheckout, logout, quienSoy } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 type Seccion = "preguntar" | "buscar" | "alertas" | "cuenta";
@@ -47,15 +40,12 @@ export function AppPanel() {
   const checkoutLanzado = useRef(false);
 
   async function comprobarSesion() {
-    if (!getToken()) {
-      setVista({ estado: "auth" });
-      return;
-    }
+    // La sesión vive en una cookie httpOnly: no hay nada que comprobar en el
+    // cliente, hay que preguntarle a la API si la cookie (si existe) es válida.
     try {
       const yo = await quienSoy();
       setVista({ estado: "panel", email: yo.email });
     } catch {
-      clearToken();
       setVista({ estado: "auth" });
     }
   }
@@ -107,8 +97,7 @@ export function AppPanel() {
   }
 
   function salir() {
-    clearToken();
-    setVista({ estado: "auth" });
+    logout().finally(() => setVista({ estado: "auth" }));
   }
 
   return (

@@ -2,11 +2,22 @@
 
 from __future__ import annotations
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Valores de fábrica que solo son aceptables en desarrollo local. Si llegan a
+# producción (típicamente porque el .env real no se cargó: typo, permisos,
+# volumen mal montado) dejarían la API con un secreto de JWT forjable por
+# cualquiera o una contraseña de Postgres trivial — mejor no arrancar.
+_VALORES_INSEGUROS = {"change-me"}
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    # "desarrollo" (por defecto, para no romper el flujo local) o "produccion".
+    # Se fija con ENTORNO=produccion en el .env del VPS.
+    entorno: str = "desarrollo"
 
     anthropic_api_key: str = ""
     claude_model: str = "claude-sonnet-5"
@@ -63,6 +74,25 @@ class Settings(BaseSettings):
             f"postgresql://{self.postgres_user}:{self.postgres_password}"
             f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
         )
+
+    @model_validator(mode="after")
+    def _rechazar_secretos_de_fabrica_en_produccion(self) -> Settings:
+        if self.entorno != "produccion":
+            return self
+        inseguros = [
+            nombre
+            for nombre, valor in (
+                ("JWT_SECRET", self.jwt_secret),
+                ("POSTGRES_PASSWORD", self.postgres_password),
+            )
+            if valor in _VALORES_INSEGUROS
+        ]
+        if inseguros:
+            raise RuntimeError(
+                "ENTORNO=produccion pero estas variables siguen en su valor de "
+                f"fábrica (revisa que el .env se está cargando): {', '.join(inseguros)}"
+            )
+        return self
 
 
 settings = Settings()

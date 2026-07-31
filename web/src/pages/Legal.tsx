@@ -103,12 +103,14 @@ export function Legal() {
           <section id="cookies" className="scroll-mt-20 space-y-4">
             <h2 className="text-lg font-semibold tracking-tight text-foreground">Cookies</h2>
             <p>
-              Este servicio no usa cookies de terceros ni de analítica. Solo guarda dos claves
-              técnicas en el almacenamiento local de tu navegador (<code>localStorage</code>):{" "}
-              <code className="font-mono text-xs">radar_token</code>, tu sesión, y{" "}
-              <code className="font-mono text-xs">theme</code>, tu preferencia de tema claro u
-              oscuro. Ninguna de las dos se comparte con terceros. Por eso no verás un banner de
-              cookies: no hay nada que consentir.
+              Este servicio no usa cookies de terceros ni de analítica. Usa una única cookie propia
+              y técnica, <code className="font-mono text-xs">radar_session</code>, estrictamente
+              necesaria para mantener tu sesión iniciada (httpOnly: ni siquiera el propio código de
+              la página puede leerla). Además, guarda tu preferencia de tema claro u oscuro (
+              <code className="font-mono text-xs">theme</code>) en el almacenamiento local de tu
+              navegador (<code>localStorage</code>). Ninguna de las dos se comparte con terceros.
+              Al ser estrictamente necesarias para el funcionamiento del servicio, no verás un
+              banner de cookies: no hay nada que consentir.
             </p>
           </section>
 

@@ -2,7 +2,14 @@ import { useEffect, useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PlanUpgrade } from "@/components/PlanUpgrade";
-import { ApiError, SesionCaducadaError, abrirPortal, getToken, miPlan, type InfoPlan } from "@/lib/api";
+import {
+  ApiError,
+  SesionCaducadaError,
+  abrirPortal,
+  miPlan,
+  obtenerTokenMcp,
+  type InfoPlan,
+} from "@/lib/api";
 
 function configMcp(token: string): string {
   return `{
@@ -65,8 +72,26 @@ function BotonPortal({ plan }: { plan: InfoPlan | null }) {
 }
 
 function BloqueToken() {
-  const token = getToken() ?? "";
+  // La sesión de la web vive en una cookie httpOnly (no la puede leer JS), así
+  // que el token para MCP ya no se "lee" de ningún sitio — se pide bajo
+  // demanda a /auth/mcp-token y solo vive en memoria hasta que se copia.
+  const [token, setToken] = useState<string | null>(null);
+  const [generando, setGenerando] = useState(false);
+  const [error, setError] = useState("");
   const [copiado, setCopiado] = useState<"config" | "token" | null>(null);
+
+  async function generar() {
+    setError("");
+    setGenerando(true);
+    try {
+      setToken(await obtenerTokenMcp());
+    } catch (err) {
+      if (err instanceof SesionCaducadaError) return;
+      setError(err instanceof ApiError ? err.message : "No se pudo generar el token.");
+    } finally {
+      setGenerando(false);
+    }
+  }
 
   async function copiar(texto: string, cual: "config" | "token") {
     try {
@@ -78,12 +103,33 @@ function BloqueToken() {
     setTimeout(() => setCopiado(null), 2000);
   }
 
+  if (!token) {
+    return (
+      <div className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          Genera un token para conectar Claude, u otro cliente MCP, a{" "}
+          <code className="font-mono text-xs">https://radarcontratacion.com/mcp</code>. Caduca a
+          los 7 días; genera uno nuevo cuando lo necesites.
+        </p>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="rounded-full"
+          onClick={generar}
+          disabled={generando}
+        >
+          {generando ? "Generando…" : "Generar token"}
+        </Button>
+        {error && <p className="text-sm text-destructive">{error}</p>}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
       <p className="text-sm text-muted-foreground">
-        Usa este token para conectar Claude, u otro cliente MCP, a{" "}
-        <code className="font-mono text-xs">https://radarcontratacion.com/mcp</code>. Caduca a los
-        7 días de iniciar sesión; vuelve a entrar para obtener uno nuevo.
+        Cópialo ahora: no se vuelve a mostrar. Si lo pierdes, genera uno nuevo.
       </p>
       <div className="flex flex-wrap gap-2">
         <Button

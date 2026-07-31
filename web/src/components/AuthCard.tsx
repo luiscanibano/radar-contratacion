@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ApiError, login, registrar, setToken } from "@/lib/api";
+import { ApiError, login, registrar } from "@/lib/api";
 
 export function AuthCard({
   registroInicial = false,
@@ -25,8 +25,11 @@ export function AuthCard({
     setError("");
     setEnviando(true);
     try {
-      const datos = modoRegistro ? await registrar({ email, password }) : await login({ email, password });
-      setToken(datos.access_token);
+      if (modoRegistro) {
+        await registrar({ email, password });
+      } else {
+        await login({ email, password });
+      }
       setPassword("");
       onAutenticado();
     } catch (err) {

@@ -1,35 +1,26 @@
-const TOKEN_KEY = "radar_token";
-
 /** Nombre del evento global disparado cuando una petición vuelve con un 401
- * y había token: permite a AppPanel volver a la pantalla de login sin que
- * cada componente que llama a la API tenga que gestionarlo por su cuenta. */
+ * inesperado (sesión caducada o cookie borrada): permite a AppPanel volver a
+ * la pantalla de login sin que cada componente que llama a la API tenga que
+ * gestionarlo por su cuenta. */
 export const EVENTO_SESION_CADUCADA = "radar:sesion-caducada";
 
 export class SesionCaducadaError extends Error {}
 
-export function getToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY);
-}
-
-export function setToken(token: string) {
-  localStorage.setItem(TOKEN_KEY, token);
-}
-
-export function clearToken() {
-  localStorage.removeItem(TOKEN_KEY);
-}
-
-/** Fetch wrapper: inyecta el Bearer token y limpia la sesión en un 401,
- * igual que el `llamar()` de la interfaz anterior (api/static/app.html). */
-async function llamar(ruta: string, opciones: RequestInit = {}): Promise<Response> {
+/** Fetch wrapper: la sesión viaja en una cookie httpOnly (el navegador la
+ * adjunta solo — no hay ningún token que leer ni inyectar aquí, así un XSS
+ * no puede robarla de localStorage). `gestionar401` se desactiva en
+ * login/registro, donde un 401 es "credenciales incorrectas", no "sesión
+ * caducada". */
+async function llamar(
+  ruta: string,
+  opciones: RequestInit = {},
+  { gestionar401 = true }: { gestionar401?: boolean } = {},
+): Promise<Response> {
   const cabeceras = new Headers(opciones.headers);
   cabeceras.set("Content-Type", "application/json");
-  const token = getToken();
-  if (token) cabeceras.set("Authorization", `Bearer ${token}`);
 
   const respuesta = await fetch(ruta, { ...opciones, headers: cabeceras });
-  if (respuesta.status === 401 && token) {
-    clearToken();
+  if (respuesta.status === 401 && gestionar401) {
     window.dispatchEvent(new CustomEvent(EVENTO_SESION_CADUCADA));
     throw new SesionCaducadaError("Tu sesión ha caducado. Vuelve a iniciar sesión.");
   }
@@ -90,35 +81,52 @@ export interface InfoPlan {
   restantes: number | null;
 }
 
-export async function login(credenciales: Credenciales): Promise<Token> {
-  const respuesta = await llamar("/auth/login", {
-    method: "POST",
-    body: JSON.stringify(credenciales),
-  });
+export async function login(credenciales: Credenciales): Promise<void> {
+  const respuesta = await llamar(
+    "/auth/login",
+    { method: "POST", body: JSON.stringify(credenciales) },
+    { gestionar401: false },
+  );
   if (!respuesta.ok) {
     throw new ApiError(respuesta.status, await detalleError(respuesta, "No se pudo iniciar sesión."));
   }
-  return respuesta.json();
 }
 
-export async function registrar(credenciales: Credenciales): Promise<Token> {
-  const respuesta = await llamar("/auth/registro", {
-    method: "POST",
-    body: JSON.stringify(credenciales),
-  });
+export async function registrar(credenciales: Credenciales): Promise<void> {
+  const respuesta = await llamar(
+    "/auth/registro",
+    { method: "POST", body: JSON.stringify(credenciales) },
+    { gestionar401: false },
+  );
   if (respuesta.status === 409) {
     throw new ApiError(409, "Ese email ya está registrado. Inicia sesión.");
   }
   if (!respuesta.ok) {
     throw new ApiError(respuesta.status, await detalleError(respuesta, "No se pudo crear la cuenta."));
   }
-  return respuesta.json();
+}
+
+export async function logout(): Promise<void> {
+  await llamar("/auth/logout", { method: "POST" }, { gestionar401: false });
 }
 
 export async function quienSoy(): Promise<Usuario> {
-  const respuesta = await llamar("/auth/me");
+  const respuesta = await llamar("/auth/me", {}, { gestionar401: false });
   if (!respuesta.ok) throw new ApiError(respuesta.status, "No se pudo verificar la sesión.");
   return respuesta.json();
+}
+
+/** Token nuevo para pegar en un cliente MCP externo (ver CuentaSeccion). Se
+ * pide bajo demanda: a diferencia de la sesión, sí sale del navegador, así
+ * que no se guarda en ningún sitio — solo vive en memoria hasta que el
+ * usuario lo copia. */
+export async function obtenerTokenMcp(): Promise<string> {
+  const respuesta = await llamar("/auth/mcp-token", { method: "POST" });
+  if (!respuesta.ok) {
+    throw new ApiError(respuesta.status, await detalleError(respuesta, "No se pudo generar el token."));
+  }
+  const datos: Token = await respuesta.json();
+  return datos.access_token;
 }
 
 export async function preguntar(texto: string): Promise<string> {

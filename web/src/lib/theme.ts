@@ -2,10 +2,10 @@ const STORAGE_KEY = "theme";
 
 export type Theme = "light" | "dark";
 
-/** Inline, pre-mount script (no-FOUC): duplicated as a literal string in every
- * HTML entry's <head>, since each page in this multi-page app mounts its own
- * React root and must resolve the theme class before first paint. */
-export const themeInitScript = `(function(){try{var s=localStorage.getItem("${STORAGE_KEY}");var d=s?s==="dark":matchMedia("(prefers-color-scheme: dark)").matches;document.documentElement.classList.toggle("dark",d);}catch(e){}})();`;
+// El script que resuelve el tema antes del primer paint (evita el flash de
+// tema incorrecto) vive en public/theme-init.js, cargado como <script src>
+// en cada HTML de entrada — no aquí. Mantener STORAGE_KEY en sync con ese
+// archivo si cambia.
 
 export function getTheme(): Theme {
   return document.documentElement.classList.contains("dark") ? "dark" : "light";

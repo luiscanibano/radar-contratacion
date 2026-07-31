@@ -45,6 +45,7 @@ api = [
     # Auth (semana 7a): hash de contraseñas y JWT.
     "argon2-cffi>=23.1",
     "pyjwt>=2.8",
+    "email-validator>=2.0",  # valida el formato de email en pydantic.EmailStr
     # Billing (semana 7b).
     "stripe>=11.0",
 ]

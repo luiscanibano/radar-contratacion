@@ -5,8 +5,9 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Panel · Radar de Contratación Pública</title>
-    <!-- keep in sync with src/lib/theme.ts:themeInitScript -->
-    <script>(function(){try{var s=localStorage.getItem("theme");var d=s?s==="dark":matchMedia("(prefers-color-scheme: dark)").matches;document.documentElement.classList.toggle("dark",d);}catch(e){}})();</script>
+    <!-- keep in sync with src/lib/theme.ts (STORAGE_KEY). Archivo externo (no
+         inline) para que la CSP script-src 'self' no necesite 'unsafe-inline'. -->
+    <script src="/theme-init.js"></script>
   </head>
   <body>
     <div id="root"></div>
