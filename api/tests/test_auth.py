@@ -160,7 +160,8 @@ def _ip_unica() -> str:
 
 def test_endpoint_registro_no_abre_sesion_hasta_confirmar_el_email(cliente, email):
     respuesta = cliente.post(
-        "/auth/registro", json={"email": email, "password": "contraseña-larga"}
+        "/auth/registro",
+        json={"email": email, "password": "contraseña-larga", "acepta_terminos": True},
     )
     assert respuesta.status_code == 201
     assert "mensaje" in respuesta.json()
@@ -294,7 +295,11 @@ def test_endpoint_login_con_credenciales_incorrectas_da_401(cliente, email):
 def test_registro_rechaza_contraseña_corta(cliente):
     respuesta = cliente.post(
         "/auth/registro",
-        json={"email": f"{uuid.uuid4().hex}@example.com", "password": "corta12"},
+        json={
+            "email": f"{uuid.uuid4().hex}@example.com",
+            "password": "corta12",
+            "acepta_terminos": True,
+        },
     )
     assert respuesta.status_code == 422
 
@@ -302,9 +307,34 @@ def test_registro_rechaza_contraseña_corta(cliente):
 def test_registro_rechaza_email_con_formato_invalido(cliente):
     respuesta = cliente.post(
         "/auth/registro",
-        json={"email": "no-es-un-email", "password": "contraseña-larga"},
+        json={
+            "email": "no-es-un-email",
+            "password": "contraseña-larga",
+            "acepta_terminos": True,
+        },
     )
     assert respuesta.status_code == 422
+
+
+def test_registro_rechaza_no_aceptar_terminos(cliente, email):
+    respuesta = cliente.post(
+        "/auth/registro",
+        json={"email": email, "password": "contraseña-larga", "acepta_terminos": False},
+    )
+    assert respuesta.status_code == 422
+
+
+def test_registro_guarda_la_fecha_de_aceptacion_de_terminos(cliente, email):
+    respuesta = cliente.post(
+        "/auth/registro",
+        json={"email": email, "password": "contraseña-larga", "acepta_terminos": True},
+    )
+    assert respuesta.status_code == 201
+    with connect() as con:
+        with con.cursor() as cur:
+            cur.execute("select terminos_aceptados_en from usuarios where email = %s", (email,))
+            (terminos_aceptados_en,) = cur.fetchone()
+    assert terminos_aceptados_en is not None
 
 
 def test_logout_borra_la_cookie_de_sesion(cliente, email):

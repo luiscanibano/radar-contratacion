@@ -12,6 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from api.db import connect
+from api.email_templates import plantilla_email
 
 
 @dataclass
@@ -72,15 +73,25 @@ def _marcar_vistos(con, alerta_id: int, entry_ids: list[str]) -> None:
         )
 
 
-def _renderizar_email(consulta_texto: str, resultados: list) -> str:
+def _renderizar_email(consulta_texto: str, resultados: list) -> tuple[str, str]:
     filas = "".join(
-        f"<li><strong>{r.objeto or r.expediente or r.entry_id}</strong>"
-        f" — {r.organo or 'órgano desconocido'}"
-        f"{f' — {r.presupuesto:,.0f} €' if r.presupuesto else ''}"
-        f' — <a href="{r.entry_id}">ver expediente</a></li>'
+        f'<li style="margin-bottom:10px;">'
+        f"<strong>{r.objeto or r.expediente or r.entry_id}</strong><br/>"
+        f'<span style="color:#64748b;">{r.organo or "órgano desconocido"}'
+        f"{f' · {r.presupuesto:,.0f} €' if r.presupuesto else ''}</span><br/>"
+        f'<a href="{r.entry_id}" style="color:#1e40af;">ver expediente</a></li>'
         for r in resultados
     )
-    return f"<p>Nuevas licitaciones para tu alerta «{consulta_texto}»:</p><ul>{filas}</ul>"
+    cuerpo = (
+        f"<p>Hay novedades para tu alerta «{consulta_texto}»:</p>"
+        f'<ul style="padding-left:20px;margin:16px 0;">{filas}</ul>'
+    )
+    return plantilla_email(
+        f"Novedades en «{consulta_texto}»",
+        cuerpo,
+        pie_contexto="Recibes este email porque tienes una alerta guardada en Radar de"
+        " Contratación Pública. Gestiona tus alertas desde tu panel.",
+    )
 
 
 def ejecutar_alertas(k: int = 20) -> ResumenAlertas:
@@ -107,10 +118,12 @@ def ejecutar_alertas(k: int = 20) -> ResumenAlertas:
                 vistos = _entry_ids_vistos(con, alerta_id)
                 nuevos = [r for r in resultados if r.entry_id not in vistos]
                 if nuevos:
+                    html, texto = _renderizar_email(consulta_texto, nuevos)
                     enviar_email(
                         email,
                         f"Radar de Contratación: novedades en «{consulta_texto}»",
-                        _renderizar_email(consulta_texto, nuevos),
+                        html,
+                        texto,
                     )
                     resumen.emails_enviados += 1
                 _marcar_vistos(con, alerta_id, [r.entry_id for r in resultados])

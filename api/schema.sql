@@ -22,6 +22,11 @@ alter table usuarios alter column email_verificado set default false;
 -- (ver usuario_actual en api/auth.py).
 alter table usuarios add column if not exists sesion_version integer not null default 0;
 
+-- Fecha de aceptación de términos/privacidad, a efectos probatorios. Nullable
+-- a propósito: las cuentas anteriores a esta comprobación no la tienen y no
+-- hace falta retro-rellenarla (mismo criterio que email_verificado arriba).
+alter table usuarios add column if not exists terminos_aceptados_en timestamptz;
+
 -- Tokens de un solo uso: confirmación de email y reset de contraseña. Se
 -- guarda el hash (sha256), no el token en claro, igual que un password
 -- hasheado — así una fuga de la BD no permite canjear tokens todavía

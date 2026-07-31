@@ -42,6 +42,7 @@ from api.auth import (
 from api.billing import crear_checkout_session, crear_portal_session, plan_actual, procesar_webhook
 from api.cuota import consumir_cuota, uso_actual
 from api.email import enviar_email
+from api.email_templates import plantilla_email
 from api.observabilidad import emitir
 from api.rate_limit import limitar
 from api.settings import settings
@@ -172,6 +173,7 @@ class Credenciales(BaseModel):
 class CredencialesRegistro(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8)
+    acepta_terminos: bool
 
 
 class SolicitudEmail(BaseModel):
@@ -214,12 +216,15 @@ def _enviar_email_verificacion(usuario: Usuario) -> None:
     try:
         token = crear_token_verificacion(usuario.id)
         enlace = f"{settings.app_base_url}/auth/verificar?token={token}"
-        enviar_email(
-            usuario.email,
-            "Confirma tu cuenta en Radar de Contratación",
-            f"<p>Confirma tu cuenta pulsando este enlace (caduca en 24 horas):</p>"
-            f'<p><a href="{enlace}">{enlace}</a></p>',
+        html, texto = plantilla_email(
+            "Confirma tu cuenta",
+            "<p>Falta un paso para empezar a usar Radar de Contratación Pública:"
+            " confirma tu email pulsando el botón de abajo. El enlace caduca en"
+            " 24 horas.</p>",
+            cta_texto="Confirmar mi cuenta",
+            cta_url=enlace,
         )
+        enviar_email(usuario.email, "Confirma tu cuenta en Radar de Contratación", html, texto)
     except Exception:  # noqa: BLE001 — un email que falla no debe romper el registro
         pass
 
@@ -228,12 +233,17 @@ def _enviar_email_reset(usuario: Usuario) -> None:
     try:
         token = crear_token_reset(usuario.id)
         enlace = f"{settings.app_base_url}/app?reset_token={token}"
+        html, texto = plantilla_email(
+            "Restablece tu contraseña",
+            "<p>Pulsa el botón de abajo para elegir una contraseña nueva. El"
+            " enlace caduca en 30 minutos.</p>"
+            "<p>Si no has sido tú, ignora este email: tu contraseña actual"
+            " sigue siendo válida.</p>",
+            cta_texto="Elegir contraseña nueva",
+            cta_url=enlace,
+        )
         enviar_email(
-            usuario.email,
-            "Restablece tu contraseña en Radar de Contratación",
-            f"<p>Restablece tu contraseña pulsando este enlace (caduca en 30 minutos):</p>"
-            f'<p><a href="{enlace}">{enlace}</a></p>'
-            f"<p>Si no has sido tú, ignora este email.</p>",
+            usuario.email, "Restablece tu contraseña en Radar de Contratación", html, texto
         )
     except Exception:  # noqa: BLE001 — igual que _enviar_email_verificacion
         pass
@@ -245,8 +255,13 @@ def _enviar_email_reset(usuario: Usuario) -> None:
     dependencies=[Depends(_limite_registro)],
 )
 def registro(credenciales: CredencialesRegistro) -> MensajeRespuesta:
+    if not credenciales.acepta_terminos:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Debes aceptar los términos de uso y la política de privacidad.",
+        )
     try:
-        usuario = registrar_usuario(credenciales.email, credenciales.password)
+        usuario = registrar_usuario(credenciales.email, credenciales.password, acepta_terminos=True)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
     _enviar_email_verificacion(usuario)

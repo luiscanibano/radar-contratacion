@@ -49,6 +49,10 @@ export interface Credenciales {
   password: string;
 }
 
+export interface CredencialesRegistro extends Credenciales {
+  acepta_terminos: boolean;
+}
+
 export interface Token {
   access_token: string;
   token_type: string;
@@ -97,7 +101,7 @@ export async function login(credenciales: Credenciales): Promise<void> {
 
 /** El registro ya no abre sesión: la cuenta queda pendiente de confirmar por
  * email (ver /auth/verificar) y el backend devuelve solo un mensaje. */
-export async function registrar(credenciales: Credenciales): Promise<string> {
+export async function registrar(credenciales: CredencialesRegistro): Promise<string> {
   const respuesta = await llamar(
     "/auth/registro",
     { method: "POST", body: JSON.stringify(credenciales) },

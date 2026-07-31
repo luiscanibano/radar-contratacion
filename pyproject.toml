@@ -99,6 +99,11 @@ target-version = "py312"
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
 
+[tool.ruff.lint.per-file-ignores]
+# Plantilla HTML de email: envolver los atributos style inline haría el
+# marcado ilegible sin ganar nada (no es código que se ejecute línea a línea).
+"api/email_templates.py" = ["E501"]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

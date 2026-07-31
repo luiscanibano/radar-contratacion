@@ -98,6 +98,22 @@ def test_ejecutar_alertas_manda_email_con_resultados_nuevos(usuario):
     assert destinatario == usuario.email
 
 
+def test_ejecutar_alertas_manda_email_con_la_plantilla_de_marca(usuario):
+    crear_alerta(usuario.id, "asfaltado de carreteras")
+    resultados = [_resultado("a")]
+
+    with (
+        patch("search.hibrida.buscar", return_value=resultados, create=True),
+        patch("api.email.enviar_email", create=True) as mock_enviar,
+    ):
+        ejecutar_alertas()
+
+    _destinatario, _asunto, html, texto = mock_enviar.call_args.args
+    assert "Radar de Contratación Pública" in html
+    assert "asfaltado de carreteras" in html
+    assert "Radar de Contratación Pública" in texto
+
+
 def test_ejecutar_alertas_no_repite_email_si_no_hay_resultados_nuevos(usuario):
     crear_alerta(usuario.id, "asfaltado de carreteras")
     resultados = [_resultado("a"), _resultado("b")]

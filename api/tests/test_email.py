@@ -38,6 +38,18 @@ def test_envio_exitoso_llama_a_resend_con_los_datos_correctos(monkeypatch):
     respuesta_falsa.raise_for_status.assert_called_once()
 
 
+def test_envio_incluye_texto_plano_cuando_se_pasa(monkeypatch):
+    monkeypatch.setattr(settings, "resend_api_key", "re_falsa")
+    monkeypatch.setattr(settings, "alert_from_email", "alertas@radarcontratacion.com")
+    respuesta_falsa = Mock()
+    respuesta_falsa.raise_for_status = Mock()
+
+    with patch("httpx.post", return_value=respuesta_falsa) as mock_post:
+        enviar_email("destino@example.com", "asunto", "<p>hola</p>", "hola")
+
+    assert mock_post.call_args.kwargs["json"]["text"] == "hola"
+
+
 def test_error_de_resend_se_propaga(monkeypatch):
     monkeypatch.setattr(settings, "resend_api_key", "re_falsa")
     respuesta_falsa = Mock()

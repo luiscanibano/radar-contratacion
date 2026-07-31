@@ -81,17 +81,23 @@ def create_access_token(usuario: Usuario) -> str:
     return jwt.encode(payload, settings.jwt_secret, algorithm="HS256")
 
 
-def registrar_usuario(email: str, password: str) -> Usuario:
+def registrar_usuario(email: str, password: str, acepta_terminos: bool = False) -> Usuario:
     """Crea un usuario nuevo sin el email confirmado. Lanza ValueError si el
-    email ya existe."""
+    email ya existe.
+
+    `acepta_terminos` con default False para no romper las llamadas directas
+    (fixtures de tests, scripts) que no pasan por el endpoint /auth/registro
+    — ese endpoint es quien exige de verdad la aceptación (ver api/main.py).
+    """
     password_hash = hash_password(password)
     with connect() as con:
         try:
             with con.cursor() as cur:
                 cur.execute(
-                    "insert into usuarios (email, password_hash, email_verificado)"
-                    " values (%s, %s, false) returning id",
-                    (email, password_hash),
+                    "insert into usuarios (email, password_hash, email_verificado,"
+                    " terminos_aceptados_en)"
+                    " values (%s, %s, false, %s) returning id",
+                    (email, password_hash, datetime.now(UTC) if acepta_terminos else None),
                 )
                 (usuario_id,) = cur.fetchone()
             con.commit()

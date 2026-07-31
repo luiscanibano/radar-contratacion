@@ -77,15 +77,32 @@ export function AuthCard({
   );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmarPassword, setConfirmarPassword] = useState("");
+  const [aceptaTerminos, setAceptaTerminos] = useState(false);
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [loginSinVerificar, setLoginSinVerificar] = useState(false);
 
+  // Tanto el registro como el reset fijan una contraseña nueva: un typo deja
+  // al usuario con una contraseña que no conoce, así que ambos piden
+  // confirmarla.
+  const pideConfirmarPassword = modo === "registro" || modo === "reset";
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
     setLoginSinVerificar(false);
+
+    if (pideConfirmarPassword && password !== confirmarPassword) {
+      setError("Las contraseñas no coinciden.");
+      return;
+    }
+    if (modo === "registro" && !aceptaTerminos) {
+      setError("Debes aceptar los términos de uso y la política de privacidad.");
+      return;
+    }
+
     setEnviando(true);
     try {
       if (modo === "login") {
@@ -93,8 +110,13 @@ export function AuthCard({
         setPassword("");
         onAutenticado();
       } else if (modo === "registro") {
-        const mensajeRegistro = await registrar({ email, password });
+        const mensajeRegistro = await registrar({
+          email,
+          password,
+          acepta_terminos: aceptaTerminos,
+        });
         setPassword("");
+        setConfirmarPassword("");
         setMensaje(mensajeRegistro);
         setModo("registro-enviado");
       } else if (modo === "olvide") {
@@ -104,6 +126,7 @@ export function AuthCard({
       } else if (modo === "reset" && resetToken) {
         await resetearPassword(resetToken, password);
         setPassword("");
+        setConfirmarPassword("");
         onAutenticado();
       }
     } catch (err) {
@@ -174,6 +197,53 @@ export function AuthCard({
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
+          )}
+          {pideConfirmarPassword && (
+            <div className="space-y-1.5">
+              <Label htmlFor="auth-confirmar-password">Confirmar contraseña</Label>
+              <Input
+                id="auth-confirmar-password"
+                type="password"
+                minLength={8}
+                autoComplete="new-password"
+                required
+                value={confirmarPassword}
+                onChange={(e) => setConfirmarPassword(e.target.value)}
+              />
+            </div>
+          )}
+          {modo === "registro" && (
+            <label htmlFor="auth-acepta-terminos" className="flex items-start gap-2 text-sm text-muted-foreground">
+              <input
+                id="auth-acepta-terminos"
+                type="checkbox"
+                required
+                checked={aceptaTerminos}
+                onChange={(e) => setAceptaTerminos(e.target.checked)}
+                className="mt-0.5 size-4 shrink-0 rounded border-border text-primary accent-primary"
+              />
+              <span>
+                He leído y acepto los{" "}
+                <a
+                  href="/legal#terminos"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-primary underline-offset-4 hover:underline"
+                >
+                  términos de uso
+                </a>{" "}
+                y la{" "}
+                <a
+                  href="/legal#privacidad"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-primary underline-offset-4 hover:underline"
+                >
+                  política de privacidad
+                </a>
+                .
+              </span>
+            </label>
           )}
           <Button type="submit" disabled={enviando} className="w-full rounded-full">
             {enviando
