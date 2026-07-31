@@ -17,10 +17,17 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 WORKDIR /app
 
 # Copia metadatos primero para aprovechar la caché de capas
-COPY pyproject.toml README.md ./
+COPY pyproject.toml uv.lock README.md ./
+# --locked: instala exactamente lo fijado en uv.lock, sin resolver versiones
+# nuevas en el build. 'uv pip install --system' sin lock resolvía siempre lo
+# último compatible en cada build, y así fue como un "mcp>=1.0" recogió la
+# 2.0.0 recién publicada (incompatible) el día del primer despliegue de esta
+# interfaz — no debe volver a pasar con ningún otro paquete.
+# --no-install-project: el código de la app se copia aparte más abajo.
 # 'search' añade la tool de búsqueda híbrida (arrastra sentence-transformers/torch)
 # 'mcp' añade el servidor MCP montado bajo /mcp (ver api/main.py)
-RUN uv pip install --system --no-cache ".[api,search,mcp]"
+RUN uv sync --locked --no-install-project --extra api --extra search --extra mcp
+ENV PATH="/app/.venv/bin:${PATH}"
 
 # Código de la aplicación
 COPY api ./api

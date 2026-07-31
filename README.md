@@ -109,8 +109,21 @@ Detalle en [evals/README.md](evals/README.md).
 
 ## Despliegue en producción (VPS)
 
-Sin Alembic ni CI/CD todavía: el despliegue es manual y el esquema de Postgres
-se aplica a mano (`make init-db` / `make embeddings`), igual que en desarrollo.
+CI/CD vía GitHub Actions ([.github/workflows/deploy.yml](.github/workflows/deploy.yml)):
+cada push a `main` corre tests + lint y, si pasan, hace `ssh` al VPS para
+`git pull` + `docker compose up -d --build`. Sin Alembic todavía: el esquema
+de Postgres se aplica a mano (`make init-db` / `make embeddings`), igual que
+en desarrollo. Los pasos de abajo son para la puesta en marcha inicial del
+VPS (una sola vez); una vez hecha, los despliegues posteriores los dispara
+el workflow solo.
+
+Secrets que necesita el repo (Settings → Secrets and variables → Actions),
+para una clave SSH dedicada al despliegue (no la personal) con acceso de
+solo ese usuario en el VPS:
+- `VPS_HOST`: IP o dominio del VPS.
+- `VPS_USER`: usuario SSH en el VPS.
+- `VPS_SSH_KEY`: clave privada; su pública debe estar en el
+  `~/.ssh/authorized_keys` de ese usuario en el VPS.
 
 1. **DNS**: registro **A** de `radarcontratacion.com` apuntando al IP del VPS
    (necesario para que Caddy pueda emitir el certificado TLS con Let's Encrypt).
@@ -145,10 +158,11 @@ se aplica a mano (`make init-db` / `make embeddings`), igual que en desarrollo.
      Caddy (`fakenews-caddy`) vive en la red `vps_default` — mismo patrón,
      sustituyendo los placeholders por esos nombres.
 4. **Esquema de Postgres** (una vez el contenedor de Postgres esté sano). Ojo:
-   `python` a secas, **no** `uv run python` — la imagen instala las
-   dependencias con `uv pip install --system` (sin `.venv` de proyecto), así
-   que `uv run` crearía una venv nueva desde cero sin los extras y fallaría
-   con `ModuleNotFoundError: psycopg`. Asegúrate también de que `.env` tiene
+   `python` a secas, **no** `uv run python` — la imagen ya trae el `.venv`
+   sincronizado con los extras (`api`, `search`, `mcp`) vía `uv sync --locked`
+   en el build; `uv run` volvería a sincronizar sin pasar esos `--extra` y se
+   los dejaría fuera, fallando con `ModuleNotFoundError: psycopg`. Asegúrate
+   también de que `.env` tiene
    `POSTGRES_HOST=postgres` (el nombre del servicio en `docker-compose.yml`),
    no `localhost` — ese es el valor por defecto de `.env.example`, pensado
    para desarrollo fuera de Docker.

@@ -50,6 +50,7 @@ api = [
 ]
 search = [
     "sentence-transformers>=3.0",  # embeddings locales (arrastra torch)
+    "torch>=2.0",  # explícito para que tool.uv.sources fije el índice CPU
     "psycopg[binary]>=3.2",
     "pgvector>=0.3",
 ]
@@ -73,6 +74,18 @@ dev = [
     "ipykernel>=6.29",
     "jupyter>=1.0",
 ]
+
+[tool.uv.sources]
+# CPU-only: nada en este proyecto entrena en GPU (embeddings de
+# sentence-transformers sobre modelos pequeños), y el wheel con CUDA de
+# PyPI arrastra varios GB de librerías nvidia-* de más — eso fue lo que
+# llenó el disco durante la primera verificación del build de Docker.
+torch = [{ index = "pytorch-cpu" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
 
 [tool.pytest.ini_options]
 testpaths = ["ingestion/tests", "analytics/tests", "search/tests", "api/tests", "evals"]
