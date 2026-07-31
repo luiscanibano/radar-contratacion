@@ -5,16 +5,16 @@ import { cn } from "@/lib/utils";
 
 function WindowChrome({ ruta }: { ruta: string }) {
   return (
-    <div className="mb-4 flex items-center gap-3 border-b border-border pb-3 dark:border-white/10">
+    <div className="mb-4 flex items-center gap-3 border-b border-border pb-3">
       <span className="flex shrink-0 gap-1.5">
         <span className="size-2.5 rounded-full bg-[#ff5f57]" />
         <span className="size-2.5 rounded-full bg-[#febc2e]" />
         <span className="size-2.5 rounded-full bg-[#28c840]" />
       </span>
-      <span className="min-w-0 flex-1 truncate rounded-md bg-muted px-2.5 py-1 text-center text-[0.7rem] text-muted-foreground dark:bg-white/5 dark:text-slate-400">
+      <span className="min-w-0 flex-1 truncate rounded-md bg-muted px-2.5 py-1 text-center text-[0.7rem] text-muted-foreground">
         {ruta}
       </span>
-      <span className="hidden shrink-0 text-[0.68rem] text-muted-foreground/70 sm:inline dark:text-slate-500">
+      <span className="hidden shrink-0 text-[0.68rem] text-muted-foreground/70 sm:inline">
         datos ilustrativos
       </span>
     </div>
@@ -48,9 +48,9 @@ const DOT_TONE: Record<NonNullable<LogLine["tono"]>, string> = {
 };
 
 const TEXT_TONE: Record<NonNullable<LogLine["tono"]>, string> = {
-  default: "text-foreground dark:text-[#e7ecf5]",
+  default: "text-foreground",
   accent: "text-accent",
-  success: "text-foreground dark:text-[#e7ecf5]",
+  success: "text-foreground",
 };
 
 export function FeatureConsoleDemo({ query, demo }: { query: string; demo: FeatureDemo }) {
@@ -83,13 +83,13 @@ export function FeatureConsoleDemo({ query, demo }: { query: string; demo: Featu
   return (
     <ConsolePanel glow className="relative min-w-0">
       <WindowChrome ruta="radarcontratacion.com/preguntar" />
-      <p className="min-h-[3em] font-medium text-foreground dark:text-white">
-        <span className="text-muted-foreground dark:text-slate-400">{"› "}</span>
+      <p className="min-h-[3em] font-medium text-foreground">
+        <span className="text-muted-foreground">{"› "}</span>
         {texto}
         {!terminado && (
           <span
             aria-hidden="true"
-            className="ml-px inline-block h-[1.1em] w-[0.55em] translate-y-[0.15em] animate-pulse bg-foreground align-text-bottom dark:bg-white"
+            className="ml-px inline-block h-[1.1em] w-[0.55em] translate-y-[0.15em] animate-pulse bg-foreground align-text-bottom"
           />
         )}
       </p>
@@ -102,7 +102,7 @@ export function FeatureConsoleDemo({ query, demo }: { query: string; demo: Featu
       >
         {demo.kind === "table" && (
           <>
-            <p className="mb-4 mt-2 text-[0.78rem] text-muted-foreground dark:text-slate-400">{demo.nota}</p>
+            <p className="mb-4 mt-2 text-[0.78rem] text-muted-foreground">{demo.nota}</p>
             <table className="w-full border-collapse">
               <tbody>
                 {demo.filas.map((fila, i) => (
@@ -111,7 +111,7 @@ export function FeatureConsoleDemo({ query, demo }: { query: string; demo: Featu
                     initial={{ opacity: 0, y: 6 }}
                     animate={terminado ? { opacity: 1, y: 0 } : { opacity: 0, y: 6 }}
                     transition={{ duration: 0.4, delay: reduced ? 0 : i * 0.09 }}
-                    className="border-t border-border dark:border-white/10"
+                    className="border-t border-border"
                   >
                     <td className="py-1 pr-4">{fila.entidad}</td>
                     <td className="py-1 text-right tabular-nums whitespace-nowrap">{fila.contratos}</td>
@@ -125,7 +125,7 @@ export function FeatureConsoleDemo({ query, demo }: { query: string; demo: Featu
 
         {demo.kind === "log" && (
           <>
-            <p className="mb-3 mt-2 text-[0.78rem] text-muted-foreground dark:text-slate-400">{demo.nota}</p>
+            <p className="mb-3 mt-2 text-[0.78rem] text-muted-foreground">{demo.nota}</p>
             <ul className="space-y-2">
               {demo.lineas.map((linea, i) => {
                 const tono = linea.tono ?? "default";
@@ -139,7 +139,7 @@ export function FeatureConsoleDemo({ query, demo }: { query: string; demo: Featu
                   >
                     <span className={cn("inline-block size-1.5 shrink-0 rounded-full", DOT_TONE[tono])} />
                     {linea.tiempo && (
-                      <span className="shrink-0 tabular-nums text-muted-foreground dark:text-slate-500">
+                      <span className="shrink-0 tabular-nums text-muted-foreground">
                         {linea.tiempo}
                       </span>
                     )}

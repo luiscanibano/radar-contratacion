@@ -30,7 +30,7 @@ export function Footer() {
       <div className="mx-auto max-w-6xl px-6 pt-16">
         <div className="grid gap-10 border-b border-border/60 pb-10 sm:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-2">
-            <Brand />
+            <Brand iconOnly size="lg" />
             <p className="mt-4 max-w-sm text-sm text-pretty text-muted-foreground">
               Pregunta a las licitaciones públicas españolas y vigila el sector con alertas y
               señales de riesgo.

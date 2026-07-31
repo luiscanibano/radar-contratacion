@@ -6,7 +6,7 @@
 //
 // Gradient design inspired by Dia Browser — https://www.diabrowser.com
 // Adapted from https://21st.dev/@ruixen.ui/components/ruixen-gradient-footer
-// with the rainbow stops swapped for Radar CP's primary → accent brand gradient.
+// with the rainbow stops swapped for an all-blue brand gradient.
 
 import {
   useEffect,
@@ -22,10 +22,10 @@ type Stop = { offset: number; color: string };
 const VBW = 1271;
 const VBH = 599;
 
-// Radar CP's signal gradient, floor (0) → top (1): primary blue → accent amber → transparent.
+// Signal gradient, floor (0) → top (1): deep navy → bright blue → transparent.
 const BRAND_STOPS: Stop[] = [
-  { offset: 0, color: "var(--primary)" },
-  { offset: 0.55, color: "var(--accent)" },
+  { offset: 0, color: "#1e3a8a" },
+  { offset: 0.55, color: "#3b82f6" },
   { offset: 1, color: "transparent" },
 ];
 

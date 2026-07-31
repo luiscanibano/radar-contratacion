@@ -4,8 +4,6 @@
 @import "@fontsource-variable/ibm-plex-sans/wght.css";
 @import "@fontsource-variable/jetbrains-mono/wght.css";
 
-@custom-variant dark (&:is(.dark *));
-
 @theme inline {
     --font-heading: var(--font-sans);
     --font-sans: 'IBM Plex Sans Variable', system-ui, sans-serif;
@@ -95,7 +93,6 @@
        --color-* para clases realmente usadas, y estos solo se referencian dentro de
        "arbitrary properties", así que no se generarían por sí solos. */
     --aurora-white: #ffffff;
-    --aurora-black: #000000;
     --aurora-transparent: transparent;
     --aurora-blue-500: #3b82f6;
     --aurora-indigo-300: #a5b4fc;
@@ -135,37 +132,6 @@
     --sidebar-accent-foreground: #1e3a8a;
     --sidebar-border: #e2e8f0;
     --sidebar-ring: #1e40af;
-}
-
-.dark {
-    --background: #0b1220;
-    --foreground: #e7ecf5;
-    --card: #111a2e;
-    --card-foreground: #e7ecf5;
-    --popover: #111a2e;
-    --popover-foreground: #e7ecf5;
-    --primary: #7c93f5;
-    --primary-foreground: #0b1220;
-    --secondary: #16213a;
-    --secondary-foreground: #c7d2fe;
-    --muted: #16213a;
-    --muted-foreground: #94a3b8;
-    --accent: #f59e0b;
-    --accent-foreground: #1f1300;
-    --success: #4ade80;
-    --success-foreground: #052e12;
-    --destructive: #f87171;
-    --border: color-mix(in oklab, white 10%, transparent);
-    --input: color-mix(in oklab, white 14%, transparent);
-    --ring: #7c93f5;
-    --sidebar: #111a2e;
-    --sidebar-foreground: #e7ecf5;
-    --sidebar-primary: #7c93f5;
-    --sidebar-primary-foreground: #0b1220;
-    --sidebar-accent: #16213a;
-    --sidebar-accent-foreground: #c7d2fe;
-    --sidebar-border: color-mix(in oklab, white 10%, transparent);
-    --sidebar-ring: #7c93f5;
 }
 
 @layer base {

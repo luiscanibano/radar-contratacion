@@ -2,386 +2,235 @@
 name: Radar de Contratación Pública
 description: La contratación pública española, preguntable en castellano con cifras verificables.
 colors:
-  papel: "#f4f5f4"
-  tinta: "#16181a"
-  tinta-suave: "#575d61"
-  regla: "#d8dbd9"
-  acento: "#2647c1"
-  acento-hover: "#1c37a0"
-  consola: "#101315"
-  consola-tinta: "#e9ebea"
-  consola-suave: "#969ea3"
-  consola-regla: "#272c2f"
-  consola-ambar: "#f0b429"
-  error: "#a83a31"
-  exito: "#1e7d43"
+  background: "#f8fafc"
+  foreground: "#0f172a"
+  card: "#ffffff"
+  primary: "#1e40af"
+  secondary: "#eef2ff"
+  muted: "#f1f5f9"
+  accent: "#d97706"
+  success: "#16a34a"
+  destructive: "#dc2626"
+  border: "#e2e8f0"
 typography:
-  display:
-    fontFamily: "Archivo, system-ui, sans-serif"
-    fontSize: "clamp(2rem, 4.2vw, 3.1rem)"
-    fontWeight: 640
-    lineHeight: 1.08
-    letterSpacing: "-0.025em"
-  titulo:
-    fontFamily: "Archivo, system-ui, sans-serif"
-    fontSize: "1.45rem"
-    fontWeight: 620
-    lineHeight: 1.25
-    letterSpacing: "-0.02em"
-  rotulo-seccion:
-    fontFamily: "Archivo, system-ui, sans-serif"
-    fontSize: "1.05rem"
-    fontWeight: 560
-    lineHeight: 1.6
-    letterSpacing: "normal"
-  cuerpo:
-    fontFamily: "Archivo, system-ui, sans-serif"
-    fontSize: "1rem"
-    fontWeight: 400
-    lineHeight: 1.6
-    letterSpacing: "normal"
-  dato:
-    fontFamily: "JetBrains Mono, ui-monospace, Cascadia Mono, monospace"
-    fontSize: "0.84rem"
-    fontWeight: 400
-    lineHeight: 1.75
-    letterSpacing: "normal"
+  sans:
+    fontFamily: "IBM Plex Sans Variable, system-ui, sans-serif"
+  mono:
+    fontFamily: "JetBrains Mono Variable, ui-monospace, Cascadia Mono, monospace"
 rounded:
-  control: "6px"
-  panel: "10px"
-components:
-  boton-primario:
-    backgroundColor: "{colors.tinta}"
-    textColor: "{colors.papel}"
-    rounded: "{rounded.control}"
-    padding: "0.65rem 1.25rem"
-  boton-primario-hover:
-    backgroundColor: "{colors.acento-hover}"
-    textColor: "#ffffff"
-  boton-secundario:
-    backgroundColor: "transparent"
-    textColor: "{colors.tinta}"
-    rounded: "{rounded.control}"
-    padding: "0.65rem 1.25rem"
-  campo:
-    backgroundColor: "{colors.papel}"
-    textColor: "{colors.tinta}"
-    rounded: "{rounded.control}"
-    padding: "0.6rem 0.75rem"
-  panel-tinta:
-    backgroundColor: "{colors.consola}"
-    textColor: "{colors.consola-tinta}"
-    rounded: "{rounded.panel}"
-    padding: "1.4rem 1.5rem"
+  control: "0.6rem (radius-sm)"
+  card: "1rem (radius-lg)"
+  panel: "1.4rem (radius-xl)"
+  hero: "1.8rem (radius-2xl)"
+stack:
+  framework: "Vite + React 18 + TypeScript"
+  styling: "Tailwind CSS v4 + shadcn/ui (preset Nova, base Radix)"
+  motion: "Framer Motion"
+  shaders: "Three.js + @react-three/fiber (fondo del héroe, code-split)"
+  icons: "lucide-react"
 ---
 
 # Design System: Radar de Contratación Pública
 
-<!-- Documentado desde el código construido (api/static/*, 2026-07-27).
-     Contrato de dirección: "La consola del analista", seed d8d987a9,
-     aprobado por el usuario el 2026-07-27. La verdad es el código. -->
+<!-- Documentado desde el código construido (web/src/**, 2026-07-28).
+     Reemplaza por completo el contrato anterior ("la consola del analista",
+     seed d8d987a9): pivote consciente hacia una estética SaaS moderna,
+     decidido por el usuario el 2026-07-28 al redisñar la interfaz con
+     ui-ux-pro-max + MCP 21st.dev. La verdad es el código en web/. -->
 
 ## Overview
 
-**Creative North Star: "La consola del analista"**
+**Creative North Star: "Radar SaaS"**
 
-Papel frío y tinta: la interfaz es un documento de trabajo, no un folleto SaaS.
-El mundo tiene dos materiales y solo dos. El **papel** (`--papel`) es la
-superficie de lectura: sobre él viven el texto, las reglas finas y los
-controles. El **panel de tinta** (`--consola`) es la superficie del dato: una
-consola oscura donde las cifras, las consultas y las respuestas del agente se
-presentan en monoespaciada. Todo lo demás —tarjetas flotantes, degradados,
-ilustraciones, hero centrado con tres columnas de features— queda fuera del
-mundo.
+La interfaz dejó de ser un documento de trabajo minimalista para ser un producto
+SaaS de IA con vocación comercial: profundidad (glass, sombra, degradado
+contenido), una paleta de dos acentos (índigo + ámbar) y movimiento real
+(Framer Motion) en vez de transiciones CSS aisladas. El objetivo es transmitir
+"herramienta profesional impresionante", no "libro de registro austero" — pero
+sigue siendo una herramienta de datos legales: nada de gráficos falsos, nada de
+cifras no etiquetadas como ilustrativas, nada de iconos-emoji.
 
-El tono es sobrio y verificable, para una audiencia que lee BOE y PLACSP en
-pantalla de oficina. La landing se comporta como el producto: el primer
-viewport es una consulta resolviéndose, no un muro de claims. La densidad es
-la de un libro de registro: filas separadas por reglas finas, columnas
-alineadas, cifras tabulares.
+**Key characteristics:**
+- Dos acentos con roles fijos: **índigo** (`--primary`) es la acción principal
+  y la identidad de marca; **ámbar** (`--accent`) es CTA secundario y señal de
+  riesgo estadístico (hereda el rol semántico del sistema anterior).
+- Superficies con profundidad: tarjetas (`--card`) con sombra suave, nav y
+  paneles de billing con `backdrop-blur`, plan destacado con degradado
+  `primary → primary/80`.
+- El panel de dato (consola oscura `#0b1220` / `#e7ecf5`) se conserva como
+  firma visual para consultas, respuestas del agente y ejemplos de features —
+  es el hilo de continuidad con la identidad anterior.
+- Modo claro/oscuro vía clase `.dark` en `<html>` (no solo `prefers-color-scheme`):
+  se resuelve una vez al cargar (`src/lib/theme.ts:themeInitScript`, inline en
+  el `<head>` de cada página para evitar parpadeo) y es conmutable a mano
+  (`ThemeToggle`, persistido en `localStorage`).
+- Motion real con Framer Motion: entradas escalonadas, hover con spring,
+  scroll-linked parallax en la sección de features. El héroe lleva además un
+  fondo WebGL (Three.js/React Three Fiber, shader propio) con dos planos de
+  ruido animado en índigo/ámbar y un anillo girando; en el resto de superficies
+  (billing) el fondo es `GradientBlobs`, blobs CSS con deriva lenta. Ambos son
+  bucles continuos — las únicas animaciones en bucle del sistema — y ambos se
+  desactivan por completo con `prefers-reduced-motion`.
 
-**Key Characteristics:**
-- Dos materiales: papel de lectura y panel de tinta para el dato.
-- Reglas finas de 1px (`--regla`) en lugar de tarjetas.
-- Un único acento (cobalto); el ámbar es exclusivamente semántico.
-- Bimodal claro/oscuro vía `prefers-color-scheme`; el panel de tinta es
-  idéntico en ambos temas.
-- Un solo momento de motion con autor por superficie.
-- HTML autocontenido, fuentes autohospedadas, sin framework ni build.
+## Stack
+
+- **Vite + React 18 + TypeScript**, app multi-página (no SPA-router): 4
+  entries independientes que se corresponden 1:1 con las rutas de FastAPI —
+  `web/index.html` (`/`), `web/app/index.html` (`/app`),
+  `web/billing/exito/index.html` y `web/billing/cancelado/index.html`.
+  Configurado en `web/vite.config.ts:build.rollupOptions.input`.
+- **Tailwind CSS v4** vía `@tailwindcss/vite`, sin `tailwind.config.js` — los
+  tokens viven como variables CSS en `web/src/index.css` bajo `@theme inline`
+  + `:root` / `.dark`.
+- **shadcn/ui** (preset Nova, base Radix) para primitivas accesibles (`Button`,
+  `Card`, `Input`, `Textarea`, `Label`, `Badge`, `Separator`) — instalado con
+  `npx shadcn@latest add <componente>` desde `web/`.
+- **Framer Motion** para toda la animación (`web/src/components/Reveal.tsx` son
+  los helpers de entrada por scroll reutilizados en toda la landing).
+- **Three.js + @react-three/fiber** solo para el fondo del héroe
+  (`ShaderScene.tsx` / `components/ui/background-paper-shaders.tsx`) — cargado
+  con `React.lazy`/`Suspense` (`ShaderBackground.tsx`) para no bloquear el
+  primer render del texto/CTA, y omitido del todo con `prefers-reduced-motion`.
+- **lucide-react** para iconos (reemplaza los SVG inline de Tabler Icons del
+  sistema anterior).
+- **Fontsource** (`@fontsource-variable/ibm-plex-sans`,
+  `@fontsource-variable/jetbrains-mono`) autohospedadas vía npm/Vite — sin
+  `<link>` a Google Fonts en runtime.
+- Despliegue: `api/Dockerfile` construye `web/` en una etapa Node y copia
+  `web/dist` a `api/static`; `api/main.py` sirve las 4 páginas con
+  `FileResponse` y monta `/assets` para los JS/CSS/fuentes con hash.
 
 ## Colors
 
-Paleta de dos materiales con un solo acento cromático; los nombres de los
-tokens están en castellano y son la nomenclatura obligatoria. El frontmatter
-recoge los valores del tema claro (canónico); el tema oscuro redefine los
-tokens indicados abajo dentro de `@media (prefers-color-scheme: dark)`.
+Dos acentos con roles fijos (a diferencia del "único acento" del sistema
+anterior), sobre una base neutra fría. Valores en `web/src/index.css`.
 
-### Primary
-- **Cobalto** (`--acento`, #2647c1 claro / #93a7ff oscuro): el único acento.
-  Términos del registro, enlaces de acción, plan destacado (inset de 2px),
-  importe destacado y anillo de foco. Su escasez es deliberada.
-- **Cobalto hundido** (`--acento-hover`, #1c37a0 claro / #b0bfff oscuro):
-  exclusivamente el fondo de hover de los botones.
+### Primary — índigo
+`--primary` (#1e40af claro / #7c93f5 oscuro): marca, CTA principal, enlaces,
+anillo de foco, plan destacado. Es la acción por defecto.
 
-### Secondary
-- **Ámbar de señal** (`--consola-ambar`, #f0b429 en ambos temas): reservado a
-  las señales estadísticas de riesgo dentro del panel de tinta. Nunca
-  decorativo, nunca sobre papel.
+### Accent — ámbar
+`--accent` (#d97706 claro / #f59e0b oscuro): CTA secundario destacado (badge
+"Más elegido" en precios) y color de señal estadística de riesgo dentro del
+panel de dato — mismo rol semántico que el `--consola-ambar` del sistema
+anterior, ahora también reutilizado como acento visual, no solo semántico.
 
-### Neutral
-- **Papel frío** (`--papel`, #f4f5f4 claro / #121415 oscuro): fondo de página
-  y texto de los botones primarios.
-- **Tinta** (`--tinta`, #16181a claro / #e8eae9 oscuro): texto principal y
-  fondo del botón primario.
-- **Tinta suave** (`--tinta-suave`, #575d61 claro / #9aa1a5 oscuro): texto
-  secundario, subtítulos, rótulos de sección, pie.
-- **Regla** (`--regla`, #d8dbd9 claro / #272b2d oscuro): las líneas finas de
-  1px que estructuran todo; también el borde de botones secundarios e inputs.
-- **Consola** (`--consola`, #101315 claro / #0b0e10 oscuro): fondo del panel
-  de tinta.
-- **Tinta de consola** (`--consola-tinta`, #e9ebea): texto dentro del panel;
-  no cambia con el tema.
-- **Consola suave** (`--consola-suave`, #969ea3): texto secundario del panel
-  (membrete, estados, prefijo `›`); no cambia con el tema.
-- **Regla de consola** (`--consola-regla`, #272c2f claro / #23282b oscuro):
-  hairlines internas del panel de tinta.
+### Success / Destructive
+`--success` (#16a34a / #4ade80) y `--destructive` (#dc2626 / #f87171): estados
+de formulario (error de auth/alertas/billing, icono de éxito en
+`/billing/exito`).
 
-### Estado (solo superficies Operate)
-- **Error** (`--error`, #a83a31 claro / #e08078 oscuro): mensajes de error del
-  panel. Solo texto, nunca fondos.
-- **Éxito** (`--exito`, #1e7d43 claro / #5fc98a oscuro): mensajes de éxito y
-  el icono de suscripción completada. Solo texto e icono de trazo.
+### Neutrales
+`--background` / `--foreground` (papel frío #f8fafc / carbón #0b1220 —
+oscuro no es negro puro, para que el glass tenga profundidad), `--card`
+(superficie elevada, blanco puro en claro / #111a2e en oscuro), `--muted`,
+`--secondary`, `--border`.
 
-### Named Rules
-**La Regla del Único Acento.** El cobalto es el único color de acento del
-sistema. Si una superficie nueva necesita "otro color", la respuesta es tinta,
-tinta suave o nada.
-
-**La Regla del Ámbar Semántico.** El ámbar significa "señal estadística a
-revisar" y nada más. Aparece solo dentro del panel de tinta, precedido del
-marcador `■`. Usarlo como decoración rompe el contrato legal del producto.
-
-**La Regla del Panel Invariante.** El panel de tinta es idéntico en tema claro
-y oscuro: `--consola-tinta`, `--consola-suave` y `--consola-ambar` no se
-redefinen en dark. El dato se lee igual a cualquier hora.
+### Panel de dato (heredado, sin cambios de rol)
+Fondo `#0b1220`, texto `#e7ecf5`, hairlines internas `white/10` — **no cambia
+entre tema claro y oscuro** (mismo principio que la "Regla del Panel
+Invariante" anterior): el dato se lee igual a cualquier hora. Vive en
+`ConsolePanel.tsx`, reutilizado en el hero, en cada feature y en la respuesta
+del agente.
 
 ## Typography
 
-**Display Font:** Archivo variable (`/static/fonts/archivo-vf.woff2`, ejes
-100–900, con fallback `system-ui, sans-serif`)
-**Body Font:** Archivo (la misma variable; el peso hace la jerarquía)
-**Label/Mono Font:** JetBrains Mono variable
-(`/static/fonts/jetbrains-mono-vf.woff2`, ejes 100–800, con fallback
-`ui-monospace, "Cascadia Mono", monospace`)
+**Sans:** IBM Plex Sans Variable — titulares y cuerpo. Elegida por su
+asociación con herramientas de datos/dev (IBM Plex es la familia de referencia
+de paneles técnicos) y por transmitir seriedad profesional sin ser fría.
 
-**Character:** Una sola sans neogrotesca que trabaja por peso y tracking, sin
-cambiar de voz, más una monoespaciada que marca inequívocamente "esto es
-dato". Las fuentes son siempre autohospedadas (`font-display: swap`); nunca un
-`<link>` a Google Fonts.
+**Mono:** JetBrains Mono Variable — todo dato verificable (consultas, cifras,
+precios, ejemplos de features, respuesta del agente). Se conserva del sistema
+anterior: sigue siendo la señal tipográfica de "esto es dato, no marketing".
 
-### Hierarchy
-- **Display** (640, `clamp(2rem, 4.2vw, 3.1rem)`, 1.08, -0.025em): el h1 del
-  héroe, con `text-wrap: balance`. Uno por página.
-- **Título** (620, 1.45rem, 1.25, -0.02em): titulares de fila del registro y
-  h1 de los avisos de billing.
-- **Rótulo de sección** (560, 1.05rem, color tinta suave): los h2. Deliberadamente
-  discretos: la sección la nombra un rótulo, no un titular.
-- **Cuerpo** (400, 1rem, 1.6): texto corriente; el secundario en tinta suave
-  con `text-wrap: pretty`. Subtítulo del héroe a 1.1rem, máx. 46ch.
-- **Dato** (JetBrains Mono, 0.84rem en panel, 0.72–0.8rem en membretes,
-  términos y metadatos, 1.7–1.75 de interlineado): consultas, cifras, precios,
-  emails de sesión, términos del registro y bloques de código.
-- **Marca** (680, 1rem, -0.01em): el nombre del producto en la cabecera.
-- **Importe** (JetBrains Mono 560, 1.6rem, `tabular-nums`): precios de los
-  planes.
-
-### Named Rules
-**La Regla del Dato Mono.** Toda cifra de negocio, consulta, precio,
-identificador o metadato técnico se compone en JetBrains Mono; los importes y
-tablas siempre con `font-variant-numeric: tabular-nums`. Si es verificable, es
-mono.
-
-**La Regla de los Pesos Intermedios.** Archivo es variable: los pesos del
-sistema son 560 (controles y rótulos), 620 (títulos), 640 (display) y 680
-(marca), con trackings negativos crecientes con el tamaño. No usar 400/700
-genéricos para jerarquía de display.
-
-## Layout
-
-Columna única centrada con anchos por modo: **1080px** para persuadir
-(landing), **720px** para operar (panel), **460px** para avisos (billing);
-padding lateral de 1.5rem en todos.
-
-La estructura es de **libro de registro**: secciones y filas separadas por
-reglas de 1px (`--regla`), nunca por cajas. El registro de funciones es una
-retícula de tres columnas (`9rem` término / `5fr` titular / `6fr` prosa) con
-filas de 1.9rem de padding vertical. Las tablas de planes son retículas donde
-los divisores son bordes compartidos (`border-left` entre planes,
-`border-bottom` por fila), no tarjetas separadas. El héroe es un split
-asimétrico `10fr / 9fr` con 3.5rem de separación: gancho y CTAs a la
-izquierda, panel de tinta a la derecha.
-
-Ritmo vertical: secciones a 4.5rem, cabecera a 1.1rem de padding, pie a
-2.25rem. Breakpoints observados: **900px** (héroe y registro a una columna;
-planes a 2×2), **620px** (la navegación textual desaparece, queda marca +
-botón), **560px** (planes a una columna; panel de tinta compacto a 0.78rem).
-
-## Elevation & Depth
-
-Sistema plano. El papel no proyecta sombras: la profundidad la da el contraste
-de material entre papel y panel de tinta. La única sombra del sistema es la
-del panel de tinta flotando sobre el papel:
-`box-shadow: 0 16px 40px rgb(9 11 12 / .22)` (la variante `.18` en el bloque
-MCP). Los controles no tienen sombra en ningún estado.
-
-### Named Rules
-**La Regla de la Sombra Única.** Solo el panel de tinta proyecta sombra, y
-solo cuando flota como pieza protagonista (héroe, bloque de código). La
-respuesta del agente dentro del panel de la app no la lleva: allí el panel
-está encastrado en el flujo, no flotando.
+Ambas autohospedadas vía Fontsource (`web/src/index.css`), eje de peso
+variable únicamente (sin cursiva ni ancho, no se necesitan).
 
 ## Shapes
 
-Dos radios y ninguno más: **6px** para controles (botones, inputs, anillo de
-foco) y **10px** para paneles de tinta (consola, bloques `pre`, respuesta del
-agente). Los bordes son siempre de 1px. Sin píldoras, sin círculos
-decorativos, sin esquinas a 0.
+Radios ampliados frente al sistema anterior (6/10px): escala derivada de
+`--radius: 1rem` en `web/src/index.css` — `sm` 0.6rem (controles), `lg` 1rem
+(tarjetas), `xl` 1.4rem (paneles de dato, feature cards), `2xl` 1.8rem
+(hero/CTA cards). Bordes de 1px; el plan destacado en precios usa un borde con
+degradado en vez de hairline.
 
-El lenguaje de marcas es tipográfico: el prompt de consulta se prefija con
-`› ` en consola suave, la señal de riesgo con un cuadrado `■ ` en ámbar. El
-cursor de tecleo es un bloque sólido de 0.55em × 1.1em.
+## Elevation & Depth
+
+A diferencia del "sistema plano" anterior, aquí la profundidad es una
+herramienta expresiva: `shadow-sm`/`shadow-xl` en tarjetas, `shadow-glow`
+(`--shadow-glow` en `index.css`) para paneles de dato flotantes (héroe, MCP),
+`backdrop-blur` en el nav sticky y en las tarjetas de auth/billing. El botón
+primario y las tarjetas de precio no destacadas se mantienen sin sombra para
+que la jerarquía de atención no se sature.
 
 ## Components
 
-### Buttons
-- **Carácter:** rotundos y silenciosos; la interacción se nota en la mano
-  (transform), no en fuegos artificiales.
-- **Shape:** radio de control (6px), sin borde el primario, `padding
-  .65rem 1.25rem` (landing) / `.55rem 1.1rem` (app); variante `pequeno`
-  a `.3rem .7rem` y .85rem.
-- **Primario:** fondo tinta, texto papel, peso 560, .95rem.
-- **Secundario:** fondo transparente, texto tinta, borde 1px regla; en hover
-  solo el borde pasa a tinta suave.
-- **Hover:** el primario pasa a cobalto hundido con texto blanco (en oscuro,
-  texto `--consola`); siempre dentro de `@media (hover: hover) and (pointer:
-  fine)`.
-- **Active:** `transform: scale(0.97)` con transición de 160ms sobre
-  `cubic-bezier(0.23, 1, 0.32, 1)`; el resto de propiedades a 160ms `ease`.
-- **Disabled:** opacidad .55 y `cursor: wait`; los estados hover/active lo
-  excluyen (`:not(:disabled)`).
-- **Focus:** `outline: 2px solid var(--acento)` con offset de 2px.
+Componentes reutilizables en `web/src/components/`:
 
-### Inputs / Fields
-- **Style:** fondo papel, borde 1px regla, radio 6px, `font: inherit`,
-  padding `.6rem .75rem`; los textarea con `resize: vertical` y min-height
-  5.5rem. Etiquetas encima, en .85rem tinta suave.
-- **Focus:** `outline: 2px solid var(--acento)` con offset -1px y el borde
-  también en acento; transición de borde a 150ms.
-- **Error:** los errores no colorean el campo; aparecen como mensaje de texto
-  debajo (ver Mensajes).
+- **`ConsolePanel` / `ConsoleMembrete`** — el panel de dato (firma visual
+  heredada). Usado en `HeroConsoleDemo`, `ParallaxFeatures`, `AskAgent` y
+  `McpSection`.
+- **`Reveal` / `RevealGroup` / `RevealItem`** — entrada por scroll
+  (`whileInView`, una vez, `useReducedMotion` respetado) para toda la landing.
+- **`ParallaxFeatures`** — sección "Qué hace": 3 bloques a pantalla parcial con
+  parallax real (`useScroll` + `useTransform` por sección, clip-path +
+  opacidad + traslación), alternando lado texto/panel.
+- **`ShaderBackground` / `ShaderScene`** — fondo del héroe: dos planos con
+  shader de ruido animado (`ui/background-paper-shaders.tsx`, índigo/ámbar) y
+  un anillo girando, sobre WebGL (Three.js/React Three Fiber). Bucle continuo,
+  code-split y ausente del todo con `prefers-reduced-motion`.
+- **`GradientBlobs`** — el mismo concepto de fondo pero en CSS puro (sin
+  WebGL), usado en las páginas de billing: dos blobs de degradado
+  (`primary`/`accent`) con blur y deriva lenta en bucle.
+- **`PricingCard`** — tarjeta de plan reutilizada en la landing (4 planes,
+  enlaces) y en `PlanUpgrade` del panel (3 planes, botones de checkout); el
+  plan `destacado` lleva degradado `primary→primary/80` y badge ámbar.
+- **`AuthCard` / `AskAgent` / `AlertsManager` / `PlanUpgrade`** — superficies
+  "Operate" del panel `/app`, todas con estado de carga/error inline (sin
+  toasts, igual que el sistema anterior) y animación de entrada/salida con
+  `AnimatePresence` en listas (alertas) y paneles de respuesta.
+- **`LandingNav` / `AppTopBar`** — cabeceras; `LandingNav` es un pill flotante
+  con blur que se intensifica al hacer scroll (`useScroll` + `useMotionValueEvent`,
+  no un listener de scroll a mano).
+- **`ThemeToggle`** — conmuta `.dark` en `<html>` y persiste en
+  `localStorage` (`web/src/lib/theme.ts`).
 
-### Panel de tinta (componente firma)
-El recipiente del dato: fondo `--consola`, texto `--consola-tinta`, borde 1px
-`--consola-regla`, radio 10px, JetBrains Mono a 0.84rem con interlineado 1.75.
-Variantes construidas: la consola del héroe (membrete de dos puntas en
-0.72rem consola suave separado por hairline; pregunta con prefijo `›`; tabla
-de resultados con hairlines internas `--consola-regla` y cifras tabulares
-alineadas a la derecha; línea de señal en ámbar), el bloque de configuración
-MCP (`pre` con scroll horizontal) y la respuesta del agente en la app
-(`white-space: pre-wrap`, sin sombra). Los datos ilustrativos se etiquetan
-como tales en el membrete: el mundo no presume cifras que no puede verificar.
+## Motion
 
-### Registro / listas
-Filas separadas por hairline `--regla`, sin fondo propio. En la landing:
-término mono en cobalto + titular 620 + prosa en tinta suave. En la app las
-alertas son filas flex (texto mono a 0.8rem + botón Borrar pequeño) y el
-estado vacío es una fila más en tinta suave, no un empty-state ilustrado.
-
-### Navigation
-Cabecera de una línea: marca (680) a la izquierda, enlaces en tinta suave (a
-tinta en hover, 150ms) y un botón secundario de sesión a la derecha. En la
-landing es sticky y arranca transparente: solo al hacer scroll gana fondo de
-papel translúcido (`color-mix` 86% + `backdrop-filter: blur(10px)`, 250ms) y
-una hairline inferior como sombra de 1px; el estado se conmuta con un
-IntersectionObserver sobre un centinela (nunca un listener de scroll) y hay
-fallback sólido bajo `prefers-reduced-transparency`. En móvil (≤620px) los
-enlaces textuales desaparecen y quedan marca y botón.
-
-### Mensajes de estado
-Texto plano de .95rem bajo el formulario que los provoca: `--error` o
-`--exito` según el caso. Sin fondos, sin iconos, sin toasts. Solo existen en
-las superficies Operate (app y billing).
-
-### Iconografía
-Tabler Icons (MIT), SVG inline de trazo (`stroke-width: 1.5`,
-`stroke-linecap/linejoin: round`), 44px en los avisos de billing,
-`aria-hidden="true"` y color por `currentColor` (éxito o tinta suave). Sin
-fuentes de iconos ni emojis.
-
-### Motion
-- **El momento protagonista.** En la landing: la consulta del héroe se teclea
-  una vez (26ms por carácter tras 350ms, cursor parpadeando a 1.1s
-  `steps(1)`) y los resultados se revelan escalonados: opacidad 400ms
-  `cubic-bezier(0.23, 1, 0.32, 1)`, arrancando a 260ms y con escalón de 90ms
-  por paso. Sin JS o con `prefers-reduced-motion`, todo el contenido queda
-  visible en su estado final desde el primer render.
-- **Deslizador de funciones (landing).** Pestañas mono con indicador de 2px
-  que se desliza entre ellas (300ms); pista con `transition: transform 450ms`
-  interrumpible (transición CSS, nunca keyframes). Arrastre con
-  `setPointerCapture`, protección multi-toque, amortiguación 0.35 en los
-  bordes y snap por velocidad (umbral 0.11 px/ms) además del de distancia
-  (25% del ancho). Autoavance cada 6.5s que muere con la primera interacción
-  y se pausa con hover o pestaña oculta; desactivado con reduced-motion.
-- **Revelados de una sola vez.** Al entrar en viewport (IntersectionObserver,
-  threshold 0.2, `unobserve` tras disparar): subida de 12px + opacidad en
-  550ms; los planes de precios escalonan 70ms; el bloque de código se desvela
-  con `clip-path: inset` en 650ms. Keyframes con `backwards` para no
-  contaminar las transiciones de hover con retardos. Sin JS o con
-  reduced-motion, todo visible (los estados ocultos viven tras `html.js` y
-  `prefers-reduced-motion: no-preference`).
-- **Morfo de estado.** El botón «copiar» del bloque MCP cruza sus etiquetas
-  con `filter: blur(2px)` + opacidad (180ms) y `scale(0.96)` al pulsar.
-- **Micro-feedback:** `scale(0.97)` de los botones (160ms, la misma curva),
-  fondo de fila en hover de precios (200ms) y transiciones de color de
-  150–160ms.
-- **La Regla de la Curva Única.** Toda animación con desplazamiento u opacidad
-  usa `cubic-bezier(0.23, 1, 0.32, 1)` (token `--curva`); los cambios de
-  color usan `ease`. No se introducen curvas nuevas.
-- **La Regla del Respeto al Movimiento.** Todo hover vive tras `@media
-  (hover: hover) and (pointer: fine)`; toda animación, tras
-  `prefers-reduced-motion: no-preference` (o un early-return en JS). El estado
-  final siempre es legible sin animación.
+- **Entrada por scroll:** fade + slide 24px, 0.6s, ease `[0.22,1,0.36,1]`, una
+  sola vez (`whileInView`, `viewport.once`). Grupos con
+  `staggerChildren` (0.07–0.08s).
+- **Parallax de features:** progreso de scroll por sección
+  (`useScroll({target, offset:["start end","center center"]})`) controla
+  opacidad, `clip-path` y traslación vertical del panel de ejemplo.
+- **Hover:** spring (`stiffness: 300, damping: 22–24`) con `y: -4` y ligera
+  escala en tarjetas; `whileTap` con `scale: 0.96` en botones si aplica.
+- **Listas (alertas, respuesta del agente):** `AnimatePresence` +
+  `layout`, entrada/salida por altura y opacidad.
+- **Fondo:** blobs con deriva continua (`repeat: Infinity`, 26–30s,
+  `easeInOut`) — el único movimiento en bucle del sistema.
+- **Accesibilidad:** todo lo anterior respeta `useReducedMotion()` de Framer
+  Motion — con movimiento reducido, los elementos aparecen en su estado final
+  sin animar (nunca se ocultan permanentemente ni dependen del JS para ser
+  legibles).
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** separar contenido con hairlines de 1px `--regla`; la estructura del
-  mundo es un libro de registro.
-- **Do** poner todo dato verificable (cifras, consultas, precios, código) en
-  JetBrains Mono, y las tablas de cifras con `tabular-nums` alineadas a la
-  derecha.
-- **Do** definir ambos temas por `prefers-color-scheme` en cada superficie
-  nueva, manteniendo el panel de tinta idéntico en los dos.
-- **Do** dar a todo elemento interactivo `:focus-visible` con `outline: 2px
-  solid var(--acento)` y offset 2px (−1px en campos).
+- **Do** usar el panel de dato (`ConsolePanel`) para toda cifra, consulta o
+  respuesta del agente — sigue siendo la señal de "esto es dato real o
+  ilustrativo etiquetado", no marketing.
+- **Do** reservar el ámbar para CTA secundario destacado o señal de riesgo;
+  el índigo es la acción por defecto.
 - **Do** etiquetar los datos de ejemplo como "datos ilustrativos" cuando no
-  salgan del corpus real.
-- **Do** mantener cada página autocontenida: CSS y JS inline, fuentes desde
-  `/static/fonts/`, cero dependencias externas.
+  salgan del corpus real (se mantiene del sistema anterior).
+- **Do** respetar `prefers-reduced-motion` en cualquier animación nueva.
 
 ### Don't:
-- **Don't** crear tarjetas con fondo y sombra sobre el papel; el único
-  recipiente con fondo propio es el panel de tinta.
-- **Don't** usar el ámbar fuera de una señal estadística, ni el error/éxito
-  fuera de mensajes de estado en superficies Operate.
-- **Don't** introducir un segundo color de acento, degradados o rellenos
-  decorativos; el cobalto trabaja solo.
-- **Don't** añadir animaciones ambientales, en bucle o parallax. Los
-  revelados por scroll son de un solo disparo, cada sección con un sabor
-  distinto (subida, escalonado, desvelado) pero siempre la misma curva; el
-  único bucle permitido es el parpadeo del cursor del héroe y el autoavance
-  del deslizador hasta la primera interacción.
-- **Don't** enlazar fuentes ni scripts de terceros (Google Fonts, CDNs);
-  rompe el compromiso de autocontención.
-- **Don't** usar radios distintos de 6px (controles) y 10px (paneles), ni
-  bordes de más de 1px.
+- **Don't** añadir un tercer acento de color; índigo + ámbar + neutros +
+  éxito/error ya cubren toda la jerarquía semántica necesaria.
+- **Don't** usar emojis como iconos — solo `lucide-react`.
+- **Don't** introducir animaciones en bucle nuevas fuera de `ShaderBackground`/
+  `GradientBlobs`; el resto del movimiento se dispara una vez.
+- **Don't** enlazar fuentes o scripts de terceros en runtime (Google Fonts,
+  CDNs) — todo autohospedado vía npm/Vite.

@@ -73,12 +73,12 @@ export function McpSection() {
           </p>
         </div>
         <Reveal>
-          <div className="relative overflow-hidden rounded-2xl border border-border bg-white shadow-[0_30px_60px_-20px_rgba(30,64,175,0.4)] dark:border-white/10 dark:bg-[#0b1220]">
+          <div className="relative overflow-hidden rounded-2xl border border-border bg-white shadow-[0_30px_60px_-20px_rgba(30,64,175,0.4)]">
             <button
               type="button"
               onClick={copiar}
               aria-label="Copiar la configuración MCP"
-              className="absolute right-4 top-4 inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-black/5 px-3 py-1.5 font-mono text-xs text-slate-600 transition-colors hover:text-slate-900 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:text-white"
+              className="absolute right-4 top-4 inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-black/5 px-3 py-1.5 font-mono text-xs text-slate-600 transition-colors hover:text-slate-900"
             >
               <AnimatePresence mode="wait" initial={false}>
                 <motion.span
@@ -94,7 +94,7 @@ export function McpSection() {
                 </motion.span>
               </AnimatePresence>
             </button>
-            <pre className="overflow-x-auto p-6 font-mono text-[0.82rem] leading-relaxed text-slate-800 dark:text-[#e7ecf5]">
+            <pre className="overflow-x-auto p-6 font-mono text-[0.82rem] leading-relaxed text-slate-800">
               <code>{CONFIG}</code>
             </pre>
           </div>
