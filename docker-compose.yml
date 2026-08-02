@@ -65,10 +65,20 @@ services:
       dockerfile: orchestration/Dockerfile
     profiles: ["orchestration"]
     env_file: .env
+    environment:
+      # Sin esto, `dagster dev` usa un directorio temporal efímero: el
+      # schedule diario se activaría pero el toggle "running" no
+      # sobreviviría a un reinicio del contenedor (redeploy, reboot del
+      # VPS...) y la ingesta dejaría de dispararse en silencio.
+      DAGSTER_HOME: /app/data/dagster_home
     volumes:
       - ./data:/app/data
     ports:
-      - "3000:3000"
+      # Solo loopback: la UI de Dagster no tiene auth propia, así que
+      # publicarla en todas las interfaces la dejaría abierta a cualquiera en
+      # internet (mismo criterio que el puerto de postgres más arriba). Para
+      # verla desde fuera del VPS, túnel SSH: ssh -L 3000:127.0.0.1:3000 ...
+      - "127.0.0.1:3000:3000"
 
   # Observabilidad self-hosted (opcional). Por defecto usamos Langfuse Cloud
   # free tier. Descomenta si prefieres self-host — pesa ~1.5 GB de RAM extra.
