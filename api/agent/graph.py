@@ -43,6 +43,10 @@ Reglas:
 - Si una herramienta devuelve un error, o si las herramientas disponibles no
   bastan para responder con datos reales, dilo explícitamente en vez de
   inventar una respuesta.
+- Los códigos de `tipo_contrato` y `estado` de la tabla de abajo son la
+  fuente de verdad: no los verifiques cruzando con el texto de `objeto`
+  (p. ej. `objeto ILIKE '%obra%'`) ni con SELECT DISTINCT — es trabajo
+  redundante que solo gasta turnos.
 
 Esquema disponible (para `consultar_datos`):
 {SCHEMA_DESCRIPTION}
@@ -64,12 +68,12 @@ def _registrar_uso(traza: Traza, llamada: LlamadaModelo, response) -> None:
     llamada.cache_creation_input_tokens = getattr(uso, "cache_creation_input_tokens", 0) or 0
 
 
-def answer(question: str, max_turns: int = 5) -> str:
+def answer(question: str, max_turns: int = 8) -> str:
     """Respuesta en texto plano. Envoltorio de `responder()` para quien no quiera la traza."""
     return responder(question, max_turns=max_turns)[0]
 
 
-def responder(question: str, max_turns: int = 5) -> tuple[str, Traza]:
+def responder(question: str, max_turns: int = 8) -> tuple[str, Traza]:
     """Responde y devuelve además la traza (turnos, tools, tokens, coste, latencia).
 
     No persiste nada: emitir la traza es responsabilidad de quien llama
