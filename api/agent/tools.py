@@ -31,6 +31,17 @@ Columnas:
   cpv (texto), cpv_division (texto, 2 dígitos = sector),
   valor_estimado (decimal), presupuesto_sin_impuestos (decimal),
   anio (entero), actualizado_en (timestamp), cerca_umbral_menor (booleano)
+
+Códigos de `tipo_contrato` (no los adivines ni los explores con
+SELECT DISTINCT, usa esta tabla directamente):
+  1 = Obras, 2 = Suministros, 3 = Servicios, 7 = Concesión de obras,
+  8 = Concesión de servicios, 21 = Gestión de servicios públicos,
+  22 = Colaboración público-privada, 32 = Concesión de servicios,
+  50 = Administrativo especial
+
+Códigos de `estado`:
+  PRE = Anuncio previo, PUB = Publicada/en plazo, EV = Pendiente de
+  adjudicación, ADJ = Adjudicada, RES = Resuelta, ANUL = Anulada
 """.strip()
 
 
