@@ -220,19 +220,6 @@ para conectarlas directamente a un cliente MCP, de dos formas:
   }
   ```
 
-## Roadmap (8 semanas)
-
-1. ✅ Ingesta PLACSP + modelo relacional
-2. ✅ Marts dbt + tests de calidad + orquestación Dagster
-3. ✅ Modelos estadísticos (anomalías, importe con incertidumbre)
-4. ✅ Capa vectorial + búsqueda híbrida
-5. ✅ Agente conversacional (text-to-SQL + RAG)
-6. ✅ Evals + observabilidad
-7. ✅ Producto (auth, Stripe, alertas) + despliegue en VPS — en producción en
-   [radarcontratacion.com](https://radarcontratacion.com), con Stripe (live) y
-   Resend (dominio verificado) configurados
-8. Servidor MCP + pulido + lanzamiento
-
 ## Aviso legal
 
 Se usan exclusivamente datos abiertos oficiales. Contienen nombres de adjudicatarios;
